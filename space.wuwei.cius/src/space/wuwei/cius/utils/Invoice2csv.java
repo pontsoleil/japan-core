@@ -28,6 +28,7 @@ public class Invoice2csv {
 	
 	static Document doc = null;
 	static XPath xpath = null;
+	
 	static String JP_PINT_CSV = "data/base/jp_pint.csv";
 	static String JP_PINT_XML_SKELTON = "data/base/jp_pint_skelton.xml";
 	
@@ -39,9 +40,12 @@ public class Invoice2csv {
     static TreeMap<Integer/* semSort */, String/* id */> multipleMap = new TreeMap<>();
 	// prepare CSV records
     static TreeMap<Integer/* sort */,Integer/* seq */> boughMap = new TreeMap<>();
-    static ArrayList<TreeMap<Integer , Integer>> boughMapList = new ArrayList<>();
-    static TreeMap<Integer,String> rowMap = new TreeMap<>();
-    static TreeMap<ArrayList<TreeMap<Integer , Integer>>, TreeMap<Integer,String>> rowMapTree = new TreeMap<>();
+    static ArrayList<TreeMap<Integer, Integer>> boughMapList = new ArrayList<>();
+    static TreeMap<Integer, String> rowMap = new TreeMap<>();
+    static TreeMap<String, TreeMap<Integer, String>> rowMapList = new TreeMap<>();
+    // CSV table
+    static ArrayList<ArrayList<String>> tidyData = new ArrayList<>();
+    
     
 	public static void main(String[] args) {
 		parseBinding(JP_PINT_CSV);
@@ -88,7 +92,36 @@ public class Invoice2csv {
 		
 	    fillGroup(root, sort, boughMapList);
 	    
+	    fillTable();
+	    
 		System.out.println("end");
+	}
+	
+	private static void fillTable() {
+		TreeMap<Integer,String> dataMap = new TreeMap<>();
+		TreeMap<Integer,String> indexMap = new TreeMap<>();
+
+		for (int i=0; i < boughMapList.size(); i++) {
+			TreeMap<Integer, Integer> boughMap = boughMapList.get(i);
+			for (Map.Entry<Integer, Integer> entry : boughMap.entrySet()) {
+				Integer sort = entry.getKey();
+				Binding binding = semBindingMap.get(sort);
+				String id = binding.getID();
+				indexMap.put(sort, id);
+			}
+		}
+		System.out.println(indexMap.toString());
+		
+		for (int i=0; i < rowMapList.size(); i++) {
+			TreeMap<Integer, String> rowMap = rowMapList.get(i);
+			for (Map.Entry<Integer, String> entry : rowMap.entrySet()) {
+				Integer sort = entry.getKey();
+				Binding binding = semBindingMap.get(sort);
+				String id = binding.getID();
+				dataMap.put(sort, id);
+			}
+		}
+		System.out.println(dataMap.toString());	
 	}
 
 	private static void fillData(Integer sort, String value, ArrayList<TreeMap<Integer,Integer>> boughMapList) {
@@ -96,12 +129,29 @@ public class Invoice2csv {
         String id = binding.getID();
 		String businessTerm = binding.getBT();
 		System.out.println("- fillData boughMapList=" + boughMapList.toString() + sort + ":" + id + " " + businessTerm + " " + value);
-//		TreeMap<Integer,String> record = new TreeMap<>();
-//		if (rowMapTree.containsKey(boughMapList)) {
-//			record = rowMapTree.get(boughMapList);
-//		}
-//		record.put(sort, value);
-//		rowMapTree.put(boughMapList, record);
+
+		String rowMapListKey = "";
+		for (int i=0; i < boughMapList.size(); i++) {
+			TreeMap<Integer, Integer> boughMap = boughMapList.get(i);
+			String rowMapKey = "";
+			for (Map.Entry<Integer, Integer> entry : boughMap.entrySet()) {
+				Integer key = entry.getKey();
+				Integer val = entry.getValue();
+				rowMapKey += (key + "=" + val + " ");
+			}
+			rowMapKey = rowMapKey.trim();
+			rowMapListKey += (rowMapKey + "_");
+		}
+		rowMapListKey = rowMapListKey.substring(0, rowMapListKey.length() - 1);
+		System.out.println("|"+rowMapListKey+"|");
+		
+		TreeMap<Integer, String> rowMap = new TreeMap<>();
+		if (rowMapList.containsKey(rowMapListKey)) {
+			rowMap = rowMapList.get(rowMapListKey);
+		}
+		rowMap.put(sort, value);
+		
+		rowMapList.put(rowMapListKey, rowMap);
 	}
 	
 	private static void fillGroup(Node parent, Integer sort, ArrayList<TreeMap<Integer, Integer>> boughMapList) {	
@@ -139,13 +189,13 @@ public class Invoice2csv {
 		            } else {
 		            	boolean isKeyPresent = isMultiple(childSort);
 		                if (isKeyPresent && countNodes > 1) {
-		                	TreeMap<Integer,Integer> lastBoughMap = boughMapList.get(boughMapList.size() - 1);
-		                	Integer lastkey = lastBoughMap.lastKey();
-		                	Integer lastvalue = lastBoughMap.get(lastkey);
+		                	TreeMap<Integer,Integer> boughMap = boughMapList.get(boughMapList.size() - 1);
+		                	Integer lastkey = boughMap.lastKey();
+		                	Integer lastvalue = boughMap.get(lastkey);
 			            	@SuppressWarnings("unchecked")
-							TreeMap<Integer,Integer> boughMap1 = (TreeMap<Integer, Integer>) lastBoughMap.clone();
+							TreeMap<Integer,Integer> boughMap1 = (TreeMap<Integer, Integer>) boughMap.clone();
 			            	if (childSort != lastkey) {
-			            		if (lastBoughMap.size() < childLevel + 1) {
+			            		if (boughMap.size() < childLevel + 1) {
 			                		boughMap1.put(childSort, i);
 			                		boughMapList.add(boughMap1);
 			            		} else {
@@ -156,7 +206,7 @@ public class Invoice2csv {
 			            		}
 			            	} else if (countNodes > 1) {
 			            		lastvalue +=1;
-			            		lastBoughMap.put(lastkey, lastvalue);
+			            		boughMap.put(lastkey, lastvalue);
 			            	}
 		                }
 	                	System.out.println("* fillGroup "+ childLevel + " boughMapList=" + boughMapList.toString() /*+ sort +":" + id + " "*/ + businessTerm + "->" /*+ childSort + ":" + childID + " "*/ + childBusinessTerm);
