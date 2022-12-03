@@ -19,9 +19,6 @@ import java.util.Iterator;
 import java.util.Map;
 //import java.util.Set;
 import java.util.TreeMap;
-import java.util.HashMap;
-//import java.util.Arrays;
-//import java.util.stream.Collectors;
 
 //import javax.xml.XMLConstants;
 //import javax.xml.namespace.NamespaceContext;
@@ -33,11 +30,12 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
 //import org.xml.sax.InputSource;
+import org.w3c.dom.NodeList;
 
 public class Invoice2csv {
 	
@@ -92,8 +90,7 @@ public class Invoice2csv {
 			Integer sort = binding.getSemSort();
 			String id = binding.getID();
 			String card = binding.getCard();
-			String xPath = binding.getXPath();
-			if (card.matches("...n")) {
+			if (card.matches("^...n$")) {
 				NodeList nodelist = getElements((Element) root, id);
 				if (nodelist.getLength() > 1) {
 					multipleMap.put(sort, id);
@@ -103,18 +100,20 @@ public class Invoice2csv {
 	    
 		Binding binding = bindingDict.get("ibg-00");
 		Integer sort = binding.getSemSort();
-		
-
-//		bough.add(0);
 		boughMap.put(1000,0);
 		boughMapList.add(boughMap);
+		
 	    fillGroup(root, sort, boughMapList);
 	    
 		System.out.println("end");
 	}
 
 	private static void fillData(Integer sort, String value, ArrayList<TreeMap<Integer,Integer>> boughMapList) {
-    	
+//		Binding binding = (Binding) semBindingMap.get(sort);
+//        String id = binding.getID();
+//		String businessTerm = binding.getBT();
+//		System.out.println("- fillData boughMapList=" + boughMapList.toString() + sort + ":" + id + " " + businessTerm + " " + value);
+
 	}
 	
 	private static void fillGroup(Node parent, Integer sort, ArrayList<TreeMap<Integer, Integer>> boughMapList) {	
@@ -129,50 +128,51 @@ public class Invoice2csv {
 			System.out.println("- fillGroup boughMapList=" + boughMapList.toString() + sort + ":" + id + " " + businessTerm + " is Empty");
 			return;
 		}
-		    	
+   	
 		for (Integer childSort : childList.keySet()) {
 			Binding childBinding = (Binding) semBindingMap.get(childSort);
             String childID = childBinding.getID();
     		String childBusinessTerm = childBinding.getBT();
-            String card = childBinding.getCard();
+    		int childLevel = Integer.parseInt(childBinding.getLevel());
            
             NodeList nodes = childList.get(childSort);
-            
-            Integer countNodes = nodes.getLength();
+            Integer countNodes = nodes.getLength();             
             if (countNodes > 0) {
+            	if (childID.matches("^ibg-[0-9]+$")) {
+					System.out.println("- fillGroup "+ childLevel +" childList " + childSort + ":" + childID + nodes.item(0).toString());
+	            }
 	            for (Integer i = 0; i < countNodes;i++) {
 	            	Node node = nodes.item(i);
-		        	if (childID.matches("ibt-[0-9]+.*")) {
-		        		try {
-		        			String value = node.getTextContent();
-			            	if (null==value || value.equals("")) {
-//			            		System.out.println("- fillData boughMapList=" + boughMapList.toString() /*+ sort +":" + id + " "*/ + businessTerm + "->" /*+ childSort + ":" + childID + " "*/ + childBusinessTerm + "is Empty");
-			            	} else {
-//				            	System.out.println("* fillData boughMapList=" + boughMapList.toString() /*+ sort +":" + id + " "*/ + businessTerm + "->" /*+ childSort + ":" + childID + " "*/ + childBusinessTerm + " " + value );            	
-				            	fillData(childSort, value, boughMapList);
-			            	}
-		        		} catch (Exception e) {
-		        			System.out.println(e.toString());
-		        		}
+		        	if (childID.matches("^ibt-[0-9]+.*$")) {
+	        			String value = node.getTextContent();
+		            	if (!(null==value || value.equals(""))) {
+//		            		System.out.println("* fillData boughMapList=" + boughMapList.toString() + sort + ":" + id + " " + businessTerm + " " + value);
+			            	fillData(childSort, value, boughMapList);
+		            	}
 		            } else {
-		            	boolean isKeyPresent = isMultiple(sort);
-		                if (isKeyPresent) {
-//		                		&& countNodes > 1) {
+		            	boolean isKeyPresent = isMultiple(childSort);
+		                if (isKeyPresent && countNodes > 1) {
 		                	TreeMap<Integer,Integer> lastBoughMap = boughMapList.get(boughMapList.size() - 1);
 		                	Integer lastkey = lastBoughMap.lastKey();
 		                	Integer lastvalue = lastBoughMap.get(lastkey);
 			            	@SuppressWarnings("unchecked")
 							TreeMap<Integer,Integer> boughMap1 = (TreeMap<Integer, Integer>) lastBoughMap.clone();
-			            	if (sort!=lastkey) {
-		                		boughMap1.put(sort, i);
-		                		boughMapList.add(boughMap1);
+			            	if (childSort != lastkey) {
+			            		if (lastBoughMap.size() < childLevel + 1) {
+			                		boughMap1.put(childSort, i);
+			                		boughMapList.add(boughMap1);
+			            		} else {
+			            			boughMap1.pollLastEntry();
+			            			boughMap1.put(childSort, i);
+			            			boughMapList.remove(boughMapList.size() - 1);
+			            			boughMapList.add(boughMap1);
+			            		}
 			            	} else if (countNodes > 1) {
 			            		lastvalue +=1;
 			            		lastBoughMap.put(lastkey, lastvalue);
 			            	}
-	                		System.out.println(boughMapList.toString());
 		                }
-	                	System.out.println("* fillGroup " + " boughMapList=" + boughMapList.toString() /*+ sort +":" + id + " "*/ + businessTerm + "->" /*+ childSort + ":" + childID + " "*/ + childBusinessTerm);
+	                	System.out.println("* fillGroup "+ childLevel + " boughMapList=" + boughMapList.toString() /*+ sort +":" + id + " "*/ + businessTerm + "->" /*+ childSort + ":" + childID + " "*/ + childBusinessTerm);
 	        			fillGroup(node, childSort, boughMapList);
 		            }
 	            }
@@ -197,18 +197,18 @@ public class Invoice2csv {
 		return isKeyPresent;
 	}
 	
-	private static String getElementValue(Element parent, String id) {
-		Binding binding = (Binding) bindingDict.get(id);
-		String xpath = binding.getXPath();
-		xpath = xpath.replace("/Invoice/", "/*/");
-		xpath += "/text()";
-		NodeList nodes = xpathEvaluate(parent,xpath);
-		String nodeValue = "";
-		if (nodes.getLength() > 0) {
-			nodeValue = nodes.item(0).getNodeValue();
-		}
-	    return nodeValue;
-	}
+//	private static String getElementValue(Element parent, String id) {
+//		Binding binding = (Binding) bindingDict.get(id);
+//		String xpath = binding.getXPath();
+//		xpath = xpath.replace("/Invoice/", "/*/");
+//		xpath += "/text()";
+//		NodeList nodes = xpathEvaluate(parent,xpath);
+//		String nodeValue = "";
+//		if (nodes.getLength() > 0) {
+//			nodeValue = nodes.item(0).getNodeValue();
+//		}
+//	    return nodeValue;
+//	}
 
 	private static NodeList getElements(Element parent, String id) {
 		Binding binding = (Binding) bindingDict.get(id);
@@ -220,7 +220,7 @@ public class Invoice2csv {
 	
 	private static TreeMap<Integer, NodeList> getChildren(Node e, String id) {
 		Integer parent_sort = ((Binding) bindingDict.get(id)).getSemSort();
-		ArrayList<TreeMap<Integer, Node>> resultsMap = new ArrayList<>();
+//		ArrayList<TreeMap<Integer, Node>> resultsMap = new ArrayList<>();
 		Binding parent_binding = (Binding) bindingDict.get(id);
 		String parent_xpath = parent_binding.getXPath();
 		ArrayList<Integer> children = childMap.get(parent_sort);
@@ -229,8 +229,9 @@ public class Invoice2csv {
 			String childID =  ((Binding) semBindingMap.get(sort)).getID();
 			Binding binding = (Binding) bindingDict.get(childID);
 			String xpath = binding.getXPath();
+			xpath = xpath.replace("/Invoice/", "/*/");
 			xpath = xpath.replace(parent_xpath, ".");
-			if (childID.matches("^ibt-.*")) {
+			if (childID.matches("^ibt-.*$")) {
 				xpath += "/text()";
 			}
 			NodeList nodes = xpathEvaluate(e,xpath);
@@ -275,7 +276,7 @@ public class Invoice2csv {
 		    	Integer order = -1;
 		    	switch (key) {
 		    	case "semSort":
-		    		if (value.matches("[0-9]+")) {
+		    		if (value.matches("^[0-9]+$")) {
 		    			order = Integer.parseInt(value);
 		    		}
 		    		binding.setSemSort(order);
@@ -296,7 +297,7 @@ public class Invoice2csv {
 		    		binding.setDatatype(value);
 		    		break;
 		    	case "synSort":
-		    		if (value.matches("[0-9]+")) {
+		    		if (value.matches("^[0-9]+$")) {
 		    			order = Integer.parseInt(value);
 		    		}
 		    		binding.setSynSort(order);
@@ -312,7 +313,7 @@ public class Invoice2csv {
 		    String l = binding.getLevel();
 		    Integer sort = binding.getSemSort();
 		    int level = 0;
-		    if (l.matches("[0-9]+")) {
+		    if (l.matches("^[0-9]+$")) {
 		    	level = Integer.parseInt(l);
 			    parents[level] = sort;
 		    	bindingDict.put(id, binding);
