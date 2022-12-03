@@ -5,26 +5,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-//import java.io.StringReader;
 import java.util.ArrayList;
-//import java.util.Comparator;
-//import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Iterator;
-//import java.util.Iterator;
-//import java.util.LinkedHashMap;
-//import java.util.List;
-//import java.util.Iterator;
-//import java.util.Hashtable;
 import java.util.Map;
-//import java.util.Set;
 import java.util.TreeMap;
 
-//import javax.xml.XMLConstants;
-//import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-//import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
@@ -34,7 +22,6 @@ import javax.xml.xpath.XPathFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-//import org.xml.sax.InputSource;
 import org.w3c.dom.NodeList;
 
 public class Invoice2csv {
@@ -54,13 +41,9 @@ public class Invoice2csv {
     static TreeMap<Integer/* sort */,Integer/* seq */> boughMap = new TreeMap<>();
     static ArrayList<TreeMap<Integer , Integer>> boughMapList = new ArrayList<>();
     static TreeMap<Integer,String> rowMap = new TreeMap<>();
-    static ArrayList<TreeMap<Integer , String>> rowMapList = new ArrayList<>();
-
+    static TreeMap<ArrayList<TreeMap<Integer , Integer>>, TreeMap<Integer,String>> rowMapTree = new TreeMap<>();
+    
 	public static void main(String[] args) {
-		NodeList nodes = null;
-		Node node = null;
-		int nodesLength = 0;
-		
 		parseBinding(JP_PINT_CSV);
 		doc = parseInvoice("data/xml/Example1.xml");
 		Element root = (Element) doc.getChildNodes().item(0);
@@ -109,11 +92,16 @@ public class Invoice2csv {
 	}
 
 	private static void fillData(Integer sort, String value, ArrayList<TreeMap<Integer,Integer>> boughMapList) {
-//		Binding binding = (Binding) semBindingMap.get(sort);
-//        String id = binding.getID();
-//		String businessTerm = binding.getBT();
-//		System.out.println("- fillData boughMapList=" + boughMapList.toString() + sort + ":" + id + " " + businessTerm + " " + value);
-
+		Binding binding = (Binding) semBindingMap.get(sort);
+        String id = binding.getID();
+		String businessTerm = binding.getBT();
+		System.out.println("- fillData boughMapList=" + boughMapList.toString() + sort + ":" + id + " " + businessTerm + " " + value);
+//		TreeMap<Integer,String> record = new TreeMap<>();
+//		if (rowMapTree.containsKey(boughMapList)) {
+//			record = rowMapTree.get(boughMapList);
+//		}
+//		record.put(sort, value);
+//		rowMapTree.put(boughMapList, record);
 	}
 	
 	private static void fillGroup(Node parent, Integer sort, ArrayList<TreeMap<Integer, Integer>> boughMapList) {	
@@ -141,12 +129,11 @@ public class Invoice2csv {
             	if (childID.matches("^ibg-[0-9]+$")) {
 					System.out.println("- fillGroup "+ childLevel +" childList " + childSort + ":" + childID + nodes.item(0).toString());
 	            }
-	            for (Integer i = 0; i < countNodes;i++) {
+	            for (int i = 0; i < countNodes; i++) {
 	            	Node node = nodes.item(i);
 		        	if (childID.matches("^ibt-[0-9]+.*$")) {
 	        			String value = node.getTextContent();
 		            	if (!(null==value || value.equals(""))) {
-//		            		System.out.println("* fillData boughMapList=" + boughMapList.toString() + sort + ":" + id + " " + businessTerm + " " + value);
 			            	fillData(childSort, value, boughMapList);
 		            	}
 		            } else {
@@ -173,7 +160,8 @@ public class Invoice2csv {
 			            	}
 		                }
 	                	System.out.println("* fillGroup "+ childLevel + " boughMapList=" + boughMapList.toString() /*+ sort +":" + id + " "*/ + businessTerm + "->" /*+ childSort + ":" + childID + " "*/ + childBusinessTerm);
-	        			fillGroup(node, childSort, boughMapList);
+	        			
+	                	fillGroup(node, childSort, boughMapList);
 		            }
 	            }
             }
@@ -197,19 +185,6 @@ public class Invoice2csv {
 		return isKeyPresent;
 	}
 	
-//	private static String getElementValue(Element parent, String id) {
-//		Binding binding = (Binding) bindingDict.get(id);
-//		String xpath = binding.getXPath();
-//		xpath = xpath.replace("/Invoice/", "/*/");
-//		xpath += "/text()";
-//		NodeList nodes = xpathEvaluate(parent,xpath);
-//		String nodeValue = "";
-//		if (nodes.getLength() > 0) {
-//			nodeValue = nodes.item(0).getNodeValue();
-//		}
-//	    return nodeValue;
-//	}
-
 	private static NodeList getElements(Element parent, String id) {
 		Binding binding = (Binding) bindingDict.get(id);
 		String xpath = binding.getXPath();
@@ -220,7 +195,6 @@ public class Invoice2csv {
 	
 	private static TreeMap<Integer, NodeList> getChildren(Node e, String id) {
 		Integer parent_sort = ((Binding) bindingDict.get(id)).getSemSort();
-//		ArrayList<TreeMap<Integer, Node>> resultsMap = new ArrayList<>();
 		Binding parent_binding = (Binding) bindingDict.get(id);
 		String parent_xpath = parent_binding.getXPath();
 		ArrayList<Integer> children = childMap.get(parent_sort);
@@ -229,14 +203,19 @@ public class Invoice2csv {
 			String childID =  ((Binding) semBindingMap.get(sort)).getID();
 			Binding binding = (Binding) bindingDict.get(childID);
 			String xpath = binding.getXPath();
+			if (! parent_xpath.equals("/Invoice")) {
+				xpath = xpath.replace(parent_xpath, ".");
+			}
 			xpath = xpath.replace("/Invoice/", "/*/");
-			xpath = xpath.replace(parent_xpath, ".");
 			if (childID.matches("^ibt-.*$")) {
 				xpath += "/text()";
 			}
-			NodeList nodes = xpathEvaluate(e,xpath);
+			NodeList nodes = xpathEvaluate(e, xpath);
 //			if (nodes.getLength() > 0) {
-//				System.out.println("- getChildren " + sort + ":" + childID + nodes.item(0).toString() + " " + xpath);
+//				for (int i = 0; i < nodes.getLength(); i++) {
+//	            	Node node = nodes.item(i);
+//	            	System.out.println("- getChildren " + sort + ":" + childID + node.toString() + " " + xpath);
+//				}
 //			}
 			childList.put(sort, nodes);
 		}
@@ -321,7 +300,6 @@ public class Invoice2csv {
 			    if (level > 0) {
 			    	int parent_level = level - 1;
 				    Integer parent_sort = parents[parent_level];
-//				    System.out.println(parent_sort + " " + sort);
 				    ArrayList<Integer> children = null;
 				    if (childMap.containsKey(parent_sort)) {
 				    	children = childMap.get(parent_sort);
@@ -329,7 +307,6 @@ public class Invoice2csv {
 				    	children = new ArrayList<Integer>();
 				    }
 				    children.add(sort);
-//				    System.out.println(children.toString());
 				    childMap.put(parent_sort,children);
 			    }
 			  }
