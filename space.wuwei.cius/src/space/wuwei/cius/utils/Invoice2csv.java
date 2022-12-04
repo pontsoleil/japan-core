@@ -1,72 +1,36 @@
 package space.wuwei.cius.utils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class Invoice2csv {
-	
-	static Document doc = null;
-	static XPath xpath = null;
-	
-	static String JP_PINT_CSV = "data/base/jp_pint.csv";
-	static String JP_PINT_XML_SKELTON = "data/base/jp_pint_skelton.xml";
 	static String IN_XML = "data/xml/Example1.xml";
 	static String OUT_CSV = "data/csv/Example1.csv";
-
-	static Map<String/* id */,Binding> bindingDict = new HashMap<>();
-	static TreeMap<Integer/* semSort */, Binding> semBindingMap = new TreeMap<>();
-	static TreeMap<Integer/* synSort */, Binding> synBindingMap = new TreeMap<>();
-	static TreeMap<Integer/* parent */, ArrayList<Integer/* child */>> childMap = new TreeMap<>();
-	static TreeMap<Integer/* parent */, TreeMap<Integer/* child */, NodeList/* child */>> childNodeListMap = new TreeMap<>();
-    static TreeMap<Integer/* semSort */, String/* id */> multipleMap = new TreeMap<>();
+	static String CHARSET = "UTF-8";
 	// prepare CSV records
     static TreeMap<Integer/* sort */,Integer/* seq */> boughMap = new TreeMap<>();
     static ArrayList<TreeMap<Integer, Integer>> boughMapList = new ArrayList<>();
     static TreeMap<Integer, String> rowMap = new TreeMap<>();
     static TreeMap<String, TreeMap<Integer, String>> rowMapList = new TreeMap<>();
     // CSV table
-	static ArrayList<String> header = new ArrayList<>();
+	public static ArrayList<String> header = new ArrayList<>();
 	static TreeMap<Integer,String> indexMap = new TreeMap<>();
 	static TreeMap<Integer,String> dataMap = new TreeMap<>();
-    static ArrayList<ArrayList<String>> tidyData = new ArrayList<>();
-    
+    public static ArrayList<ArrayList<String>> tidyData = new ArrayList<>();
+
 	public static void main(String[] args) {
-		parseBinding(JP_PINT_CSV);
-		doc = parseInvoice(IN_XML);
-		Element root = (Element) doc.getChildNodes().item(0);
+		
+		FileHandler.parseBinding();
+		FileHandler.doc = FileHandler.parseInvoice(IN_XML);
+		Element root = (Element) FileHandler.doc.getChildNodes().item(0);
 //		// cbc:DocumentCurrencyCode
 //		String documentCurrencyCode = getElementValue(root, "ibt-005");//"/*/cbc:DocumentCurrencyCode/text()");
 //	    System.out.println(documentCurrencyCode);
@@ -86,38 +50,38 @@ public class Invoice2csv {
 //	        	System.out.println(child.getKey() + " = " + ((Node) child.getValue()).getNodeValue());	  
 //	        }
 //	    }
-		for (Map.Entry<String, Binding> entry : bindingDict.entrySet()) {
+		for (Map.Entry<String, Binding> entry : FileHandler.bindingDict.entrySet()) {
 			Binding binding = entry.getValue();
 			Integer sort = binding.getSemSort();
 			String id = binding.getID();
 			String card = binding.getCard();
 			if (card.matches("^...n$")) {
-				NodeList nodelist = getElements((Element) root, id);
+				NodeList nodelist = FileHandler.getElements((Element) root, id);
 				if (nodelist.getLength() > 1) {
-					multipleMap.put(sort, id);
+					FileHandler.multipleMap.put(sort, id);
 				}
 			}
 		}
 	    
-		Binding binding = bindingDict.get("ibg-00");
+		Binding binding = FileHandler.bindingDict.get("ibg-00");
 		Integer sort = binding.getSemSort();
 		boughMap.put(1000,0);
 		boughMapList.add(boughMap);
 		
 	    fillGroup(root, sort, boughMapList);   
 	    fillTable();
-        csvFileWrite(OUT_CSV,"UTF-8");
+        FileHandler.csvFileWrite(OUT_CSV, CHARSET);
 
 		System.out.println("END");
 	}
 	
 	private static void fillTable() {
 		header.add("ibg-00");
-		for (Map.Entry<Integer,String> multipleEntry : multipleMap.entrySet()) {
+		for (Map.Entry<Integer,String> multipleEntry : FileHandler.multipleMap.entrySet()) {
 			String multipleID = multipleEntry.getValue();
 			header.add(multipleID);
 		}
-		for (Map.Entry<Integer,Binding> dataEntry : semBindingMap.entrySet()) {
+		for (Map.Entry<Integer,Binding> dataEntry : FileHandler.semBindingMap.entrySet()) {
 			Binding dataBinding = dataEntry.getValue();
 			if (dataBinding.isUsed()) {
 				String dataID = dataBinding.getID();
@@ -138,7 +102,7 @@ public class Invoice2csv {
 				for (String index : indexes) {
 					List<String> data = Arrays.asList(index.split("="));
 					Integer boughSort = Integer.parseInt(data.get(0));
-					Binding boughBinding = semBindingMap.get(boughSort);
+					Binding boughBinding = FileHandler.semBindingMap.get(boughSort);
 					String boughID = boughBinding.getID();
 					String boughSeq = data.get(1);
 					int boughIndex = header.indexOf(boughID);
@@ -150,7 +114,7 @@ public class Invoice2csv {
 			for (Map.Entry<Integer, String> entry : rowMap.entrySet()) {
 				Integer sort = entry.getKey();
 				String value = entry.getValue();
-				Binding binding = semBindingMap.get(sort);
+				Binding binding = FileHandler.semBindingMap.get(sort);
 				String id = binding.getID();
 				int dataIndex = header.indexOf(id);
 				record.set(dataIndex, value);
@@ -160,30 +124,8 @@ public class Invoice2csv {
 		System.out.println(tidyData.toString());			
 	}
 
-	private static void csvFileWrite(String filename, String charset) {
-		System.out.println(filename + " " + charset);
-		try {
-			FileOutputStream fo = new FileOutputStream(filename);
-			Charset cs = Charset.forName(charset);
-			OutputStreamWriter osw = new OutputStreamWriter(fo, cs);
-			BufferedWriter bw = new BufferedWriter(osw);
-
-			String headerLine = String.join(",", header);
-			bw.write(headerLine);
-            bw.write("\n");
-            for(int i=0; i < tidyData.size(); i++) {
-            	String line = String.join(",", tidyData.get(i));
-                bw.write(line);
-                bw.write("\n");
-            }
-            bw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-	}
-
 	private static void fillData(Integer sort, String value, ArrayList<TreeMap<Integer,Integer>> boughMapList) {
-		Binding binding = (Binding) semBindingMap.get(sort);
+		Binding binding = (Binding) FileHandler.semBindingMap.get(sort);
         String id = binding.getID();
 		String businessTerm = binding.getBT();
 		binding.setUsed(true);
@@ -197,7 +139,7 @@ public class Invoice2csv {
 				Integer boughSort = entry.getKey();
 				Integer seq = entry.getValue();
 				rowMapKey += (boughSort + "=" + seq + " ");
-				Binding boughBinding = semBindingMap.get(boughSort);
+				Binding boughBinding = FileHandler.semBindingMap.get(boughSort);
 				String boughID = boughBinding.getID();
 				indexMap.put(boughSort, boughID);
 			}
@@ -217,11 +159,11 @@ public class Invoice2csv {
 	
 	private static void fillGroup(Node parent, Integer sort, ArrayList<TreeMap<Integer, Integer>> boughMapList) {	
 		// get child Nodes
-		Binding binding = semBindingMap.get(sort);
+		Binding binding = FileHandler.semBindingMap.get(sort);
 		String id = binding.getID();
 		String businessTerm = binding.getBT();
 
-		TreeMap<Integer, NodeList> childList = getChildren(parent,id);
+		TreeMap<Integer, NodeList> childList = FileHandler.getChildren(parent,id);
 		
 		if (childList.size() == 0) {
 			System.out.println("- fillGroup boughMapList=" + boughMapList.toString() + sort + ":" + id + " " + businessTerm + " is Empty");
@@ -229,7 +171,7 @@ public class Invoice2csv {
 		}
    	
 		for (Integer childSort : childList.keySet()) {
-			Binding childBinding = (Binding) semBindingMap.get(childSort);
+			Binding childBinding = (Binding) FileHandler.semBindingMap.get(childSort);
             String childID = childBinding.getID();
     		String childBusinessTerm = childBinding.getBT();
     		int childLevel = Integer.parseInt(childBinding.getLevel());
@@ -281,7 +223,7 @@ public class Invoice2csv {
 
 	private static boolean isMultiple(Integer sort) {
 		// Get the iterator over the HashMap
-		Iterator<Map.Entry<Integer, String>> iterator = multipleMap.entrySet().iterator();
+		Iterator<Map.Entry<Integer, String>> iterator = FileHandler.multipleMap.entrySet().iterator();
 		// flag to store result
 		boolean isKeyPresent = false;
 		// Iterate over the HashMap
@@ -295,153 +237,5 @@ public class Invoice2csv {
 		}
 		return isKeyPresent;
 	}
-	
-	private static NodeList getElements(Element parent, String id) {
-		Binding binding = (Binding) bindingDict.get(id);
-		String xpath = binding.getXPath();
-		xpath = xpath.replaceAll("/Invoice/", "/*/");
-		NodeList nodes = xpathEvaluate(parent, xpath);
-		return nodes;
-	}
-	
-	private static TreeMap<Integer, NodeList> getChildren(Node e, String id) {
-		Integer parent_sort = ((Binding) bindingDict.get(id)).getSemSort();
-		Binding parent_binding = (Binding) bindingDict.get(id);
-		String parent_xpath = parent_binding.getXPath();
-		ArrayList<Integer> children = childMap.get(parent_sort);
-		TreeMap<Integer, NodeList> childList = new TreeMap<>();	
-		for (Integer sort: children) {
-			String childID =  ((Binding) semBindingMap.get(sort)).getID();
-			Binding binding = (Binding) bindingDict.get(childID);
-			String xpath = binding.getXPath();
-			if (! parent_xpath.equals("/Invoice")) {
-				xpath = xpath.replace(parent_xpath, ".");
-			}
-			xpath = xpath.replace("/Invoice/", "/*/");
-			if (childID.matches("^ibt-.*$")) {
-				xpath += "/text()";
-			}
-			NodeList nodes = xpathEvaluate(e, xpath);
-//			if (nodes.getLength() > 0) {
-//				for (int i = 0; i < nodes.getLength(); i++) {
-//	            	Node node = nodes.item(i);
-//	            	System.out.println("- getChildren " + sort + ":" + childID + node.toString() + " " + xpath);
-//				}
-//			}
-			childList.put(sort, nodes);
-		}
-		return childList;
-	}
-	
-	private static NodeList xpathEvaluate(Node node, String path) {
-		XPathExpression expr = null;
-		Object result;
-		try {
-			expr = xpath.compile(path);
-			result = expr.evaluate(node, XPathConstants.NODESET);
-			return (NodeList) result; 
-		} catch (XPathExpressionException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
 
-	private static void parseBinding(String fname) {
-		try (BufferedReader fileReader = new BufferedReader(new FileReader(fname)))
-		{
-		  String line = "";
-		  line = fileReader.readLine();
-		  String[] headers = line.split(",");
-		  Integer[] parents = new Integer[6];
-		  //Read the file line by line
-		  while ((line = fileReader.readLine()) != null) {
-		    //Get all tokens available in line
-		    String[] tokens = line.split(",");
-//		    //Verify tokens
-//		    System.out.println(Arrays.toString(tokens));
-		    Binding binding = new Binding(0, "", "", "", "", "", 0, "", "");
-		    for (int i = 0; i < headers.length; i++) {
-		    	String key = headers[i].replace("\uFEFF", "");
-		    	String value = tokens[i];
-		    	Integer order = -1;
-		    	switch (key) {
-		    	case "semSort":
-		    		if (value.matches("^[0-9]+$")) {
-		    			order = Integer.parseInt(value);
-		    		}
-		    		binding.setSemSort(order);
-		    		break;
-		    	case "id":
-		    		binding.setID(value);
-		    		break;
-		    	case "level":
-		    		binding.setLevel(value);
-		    		break;
-		    	case "businessTerm":
-		    		binding.setBT(value);
-		    		break;
-		    	case "card":
-		    		binding.setCard(value);
-		    		break;
-		    	case "dataType":
-		    		binding.setDatatype(value);
-		    		break;
-		    	case "synSort":
-		    		if (value.matches("^[0-9]+$")) {
-		    			order = Integer.parseInt(value);
-		    		}
-		    		binding.setSynSort(order);
-		    		break;
-		    	case "xPath":
-		    		binding.setXPath(value);
-		    		break;
-		    	case "occur":
-		    		binding.setOccur(value);
-		    	}
-		    }
-		    String id = binding.getID();
-		    String l = binding.getLevel();
-		    Integer sort = binding.getSemSort();
-		    int level = 0;
-		    if (l.matches("^[0-9]+$")) {
-		    	level = Integer.parseInt(l);
-			    parents[level] = sort;
-		    	bindingDict.put(id, binding);
-		    	semBindingMap.put(sort, binding);
-			    if (level > 0) {
-			    	int parent_level = level - 1;
-				    Integer parent_sort = parents[parent_level];
-				    ArrayList<Integer> children = null;
-				    if (childMap.containsKey(parent_sort)) {
-				    	children = childMap.get(parent_sort);
-				    } else {
-				    	children = new ArrayList<Integer>();
-				    }
-				    children.add(sort);
-				    childMap.put(parent_sort,children);
-			    }
-			  }
-		  }
-		}
-		catch (IOException e) {
-		  e.printStackTrace();
-		}
-	}
-
-	private static Document parseInvoice(String invoice) {
-		try {
-		    //Build DOM
-		    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		    factory.setNamespaceAware(true); // never forget this!
-		    DocumentBuilder builder = factory.newDocumentBuilder();
-		    doc = builder.parse(new FileInputStream(new File(invoice)));
-		    //Create XPath
-		    XPathFactory xpathfactory = XPathFactory.newInstance();
-		    xpath = xpathfactory.newXPath();
-		    xpath.setNamespaceContext(new NamespaceResolver(doc));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return doc;
-	}
 }
