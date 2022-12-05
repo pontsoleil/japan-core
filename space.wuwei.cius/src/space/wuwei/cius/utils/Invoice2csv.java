@@ -30,7 +30,7 @@ public class Invoice2csv {
 		
 		FileHandler.parseBinding();
 		FileHandler.doc = FileHandler.parseInvoice(IN_XML);
-		Element root = (Element) FileHandler.doc.getChildNodes().item(0);
+//		Element root = (Element) FileHandler.doc.getChildNodes().item(0);
 //		// cbc:DocumentCurrencyCode
 //		String documentCurrencyCode = getElementValue(root, "ibt-005");//"/*/cbc:DocumentCurrencyCode/text()");
 //	    System.out.println(documentCurrencyCode);
@@ -56,7 +56,7 @@ public class Invoice2csv {
 			String id = binding.getID();
 			String card = binding.getCard();
 			if (card.matches("^...n$")) {
-				NodeList nodelist = FileHandler.getElements((Element) root, id);
+				NodeList nodelist = FileHandler.getElements((Element) FileHandler.root, id);
 				if (nodelist.getLength() > 1) {
 					FileHandler.multipleMap.put(sort, id);
 				}
@@ -68,7 +68,7 @@ public class Invoice2csv {
 		boughMap.put(1000,0);
 		boughMapList.add(boughMap);
 		
-	    fillGroup(root, sort, boughMapList);   
+	    fillGroup(FileHandler.root, sort, boughMapList);   
 	    fillTable();
         FileHandler.csvFileWrite(OUT_CSV, CHARSET);
 

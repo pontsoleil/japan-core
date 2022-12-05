@@ -13,6 +13,7 @@ import java.util.HashMap;
 //import java.util.Hashtable;
 import java.util.Map;
 //import java.util.Arrays;
+import java.util.TreeMap;
 
 //import javax.xml.XMLConstants;
 //import javax.xml.namespace.NamespaceContext;
@@ -38,157 +39,180 @@ import org.w3c.dom.Node;
 //import org.xml.sax.InputSource;
 
 public class Csv2Invoice {
-	
-	static Map<String,Object> bindingDict = new HashMap<>();
-	static ArrayList<Object> bindingList = new ArrayList<>();
-	static Document doc = null;
-	static XPath xpath = null;
-	
-	static String JP_PINT_CSV = "data/base/jp_pint.csv";
-	static String JP_PINT_XML_SKELTON = "data/base/jp_pint_skeleton.xml";
-	
-	static String nsURIcac = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2";
-	static String nsURIcbc = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2";
+	static String OUT_XML = "data/xml/Example1out.xml";
+	static String IN_CSV = "data/csv/Example1.csv";
+	static String CHARSET = "UTF-8";
+    // CSV table
+	public static ArrayList<String> header = new ArrayList<>();
+	static TreeMap<Integer,String> indexMap = new TreeMap<>();
+	static TreeMap<Integer,String> dataMap = new TreeMap<>();
+    public static ArrayList<ArrayList<String>> tidyData = new ArrayList<>();
+    // prepare CSV records
+    static TreeMap<Integer/* sort */,Integer/* seq */> boughMap = new TreeMap<>();
+    static ArrayList<TreeMap<Integer, Integer>> boughMapList = new ArrayList<>();
+    static TreeMap<Integer, String> rowMap = new TreeMap<>();
+    static TreeMap<String, TreeMap<Integer, String>> rowMapList = new TreeMap<>();
+
+//	static String nsURIcac = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2";
+//	static String nsURIcbc = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2";
 	
 	public static void main(String[] args) {
-		NodeList nodes = null;
-		NodeList children = null;
-		Node node = null;
-		Node child = null;
-		int nodesLength = 0;
+//		NodeList nodes = null;
+//		NodeList children = null;
+//		Node node = null;
+//		Node child = null;
+//		int nodesLength = 0;
 		
-		parseBinding(JP_PINT_CSV);
-		parseSkeleton(JP_PINT_XML_SKELTON);
+		FileHandler.parseBinding();
+		FileHandler.csvFileRead(IN_CSV, CHARSET);
+		FileHandler.parseSkeleton();
 		
-		Node root = doc.getFirstChild();
-
-		// cbc:ID
-		appendElementNS((Element)root, nsURIcbc, "cbc:ID", "abc-123");
+		for (String id : header) {
+			Binding binding = FileHandler.bindingDict.get(id);
+			Integer sort = binding.getSynSort();
+			indexMap.put(sort, id);
+		}
+		rowMapList = new TreeMap<>();
+		for (ArrayList<String> record: tidyData) {
+			System.out.println(record.toString());
+			rowMap = new TreeMap<>();
+			String key = "";
+			for (int i = 0; i < record.size(); i++) {
+				String field = record.get(i);
+				if (""!=field) {
+					String id = header.get(i);
+					Binding binding = FileHandler.bindingDict.get(id);
+					Integer sort = binding.getSynSort();
+					if (id.matches("^ibg-[0-9]+$")) {
+						key += sort+"="+field+" ";
+					} else {
+						rowMap.put(sort, field);
+					}
+				}
+			}
+			key = key.trim();
+			rowMapList.put(key, rowMap);
+		}
+		System.out.println(rowMapList.toString());
 		
-		// cac:taxTotal
-		Element taxTotal = appendElementNS((Element)root, nsURIcac, "cac:taxTotal", "");
-		Element taxAmount = appendElementNS(taxTotal, nsURIcbc, "cbc:TaxAmount", "3000");
-		taxAmount.setAttribute("currencyID","JPY");
-		Element taxSubTotal = appendElementNS(taxTotal, nsURIcac, "cac:TaxSubTotal", "");
-		Element taxableAmount = appendElementNS(taxSubTotal, nsURIcbc, "cbc:TaxableAmount", "30000");
-		taxableAmount.setAttribute("currencyID","JPY");
-		Element taxAmount_Taxcategory = appendElementNS(taxSubTotal, nsURIcbc, "cbc:TaxAmount", "3000");		
-		taxAmount_Taxcategory.setAttribute("currencyID","JPY");
+		Element parent = null;
+		for (Map.Entry<String, TreeMap<Integer, String>> row : rowMapList.entrySet()) {
+			String key = row.getKey();
+			String[] boughs = key.split(",");
+			for (String bough : boughs) {
+				String[] data = bough.split(" ");
+				for (String ds : data) {
+					String[] d = ds.split("=");
+					Integer boughSort = Integer.parseInt(d[0]);
+					Integer boughSeq = Integer.parseInt(d[1]);
+					Binding boughBinding = FileHandler.synBindingMap.get(boughSort);
+					String id = boughBinding.getID();
+					String xPath = boughBinding.getXPath();
+					if (FileHandler.ROOT_ID.equals(id)) {
+						parent = FileHandler.root;
+					} else {
+						NodeList boughNodes = FileHandler.getElements(FileHandler.root, id);
+						parent = (Element) boughNodes.item(boughSeq);
+					}
+					if (null==parent) {
+						String value = "";
+						HashMap<String,String> attributes = null;
+						appendElementNS(FileHandler.root, value, xPath, attributes);
+//						System.out.println("Pause");
+					}
+				}
+			}
+			
+			TreeMap<Integer, String> rowMap = row.getValue();
+			for (Map.Entry<Integer, String> entry : rowMap.entrySet()) {
+				Integer synSort = entry.getKey();
+				String value = entry.getValue();
+				Binding binding = FileHandler.synBindingMap.get(synSort);
+				String xPath = binding.getXPath();
+				NodeList results = FileHandler.xpathEvaluate(parent, xPath);
+				if (0==results.getLength()) {
+					HashMap<String,String> attributes = null;
+					appendElementNS(parent, value, xPath, attributes);
+				}
+				System.out.println("Pause2");
+			}
+		}
 		
-		systemOutXML(doc);
-		
-//		nodes = xpathEvaluate(doc,"/*/cbc:DocumentCurrencyCode/text()");
-//		
-//	    String documentCurrencyCode = nodes.item(0).getNodeValue();
-//	    System.out.println(documentCurrencyCode);
-	    
-		// cac:TaxSubtotal
-		
-	    nodes = xpathEvaluate(doc,"/*/cac:TaxTotal[cbc:TaxAmount/@currencyID=/*/cbc:DocumentCurrencyCode/text()]/cac:TaxSubtotal");
-	    nodesLength = nodes.getLength();
-	    for (int i = 0; i < nodesLength; i++) {
-	      node = nodes.item(i);
-		  children = xpathEvaluate(node,"./cbc:TaxableAmount/text()");
-		  child = children.item(0);
-		  System.out.println(child.getNodeValue());	  
-		  children = xpathEvaluate(node,"./cbc:TaxAmount/text()");
-		  child = children.item(0);
-		  System.out.println(child.getNodeValue());
-		  children = xpathEvaluate(node,"./cac:TaxCategory/cbc:ID/text()");
-		  child = children.item(0);
-		  System.out.println(child.getNodeValue());	
-		  children = xpathEvaluate(node,"./cac:TaxCategory/cbc:Percent/text()");
-		  child = children.item(0);
-		  System.out.println(child.getNodeValue());
-	    }
-		
-//		for (int i=0; i < bindingList.size(); i++) {
-//			Object b = bindingList.get(i);
-////			String id = b.get("id");
-//			System.out.println(b.toString());	
-//		}
-		System.out.println("end");
+		System.out.println("END");
 	}
 
-	private static Element appendElementNS(Element root, String nsURI, String qname, String content) {
-		Element e = doc.createElementNS(nsURI, qname);
-		if (content!="") {
-			e.setTextContent(content);
+	private static void appendElementNS(Element parent, String value, String xPath, HashMap<String,String> attributes) {
+		System.out.println(xPath);
+		int start = xPath.indexOf("[");
+		int last = xPath.lastIndexOf("]");
+		String selector = "";
+		String xPath1 = "";
+		if (start>=0) {
+			selector = xPath.substring(start, last+1);
+			xPath1 = xPath.substring(0, start) + xPath.substring(last+1,xPath.length());
+		} else {
+			xPath1 = xPath;
 		}
-		root.appendChild(e);
-		return e;
+		System.out.println(xPath1.substring(1));
+		String[] paths = xPath1.substring(1).split("/");
+		if (paths.length > 1) {
+			Element parent1 = parent;
+			String[] ename1 = paths[1].split(":");
+			String ns1 = ename1[0];
+			String nsURI1 = FileHandler.nsURIMap.get(ns1);
+			String qname1 = ename1[1];
+			if (2==paths.length) {
+				FileHandler.appendElementNS(parent1, nsURI1, qname1, value, attributes);
+			} else {
+				Element parent2 = FileHandler.appendElementNS(parent1, nsURI1, qname1, null, null);
+				String[] ename2 = paths[2].split(":");
+				String ns2 = ename2[0];
+				String nsURI2 = FileHandler.nsURIMap.get(ns2);
+				String qname2 = ename2[1];
+				if (3==paths.length) {
+					FileHandler.appendElementNS(parent2, nsURI2, qname2, value, attributes);
+				} else {
+					Element parent3 = FileHandler.appendElementNS(parent2, nsURI2, qname2, null, null);
+					String[] ename3 = paths[3].split(":");
+					String ns3 = ename3[0];
+					String nsURI3 = FileHandler.nsURIMap.get(ns3);
+					String qname3 = ename3[1];
+					if (4==paths.length) {
+						FileHandler.appendElementNS(parent3, nsURI3, qname3, value, attributes);
+					} else {
+						Element parent4 = FileHandler.appendElementNS(parent3, nsURI3, qname3, null, null);
+						String[] ename4 = paths[4].split(":");
+						String ns4 = ename4[0];
+						String nsURI4 = FileHandler.nsURIMap.get(ns4);
+						String qname4 = ename4[1];
+						if (5==paths.length) {
+							FileHandler.appendElementNS(parent4, nsURI4, qname4, value, attributes);
+						} else {
+							Element parent5 = FileHandler.appendElementNS(parent4, nsURI4, qname4, null, null);
+							String[] ename5 = paths[5].split(":");
+							String ns5 = ename5[0];
+							String nsURI5 = FileHandler.nsURIMap.get(ns5);
+							String qname5 = ename5[1];
+							if (6==paths.length) {
+								FileHandler.appendElementNS(parent5, nsURI5, qname5, value, attributes);
+							} else {
+								Element parent6 = FileHandler.appendElementNS(parent5, nsURI5, qname5, null, null);
+								String[] ename6 = paths[6].split(":");
+								String ns6 = ename6[0];
+								String nsURI6 = FileHandler.nsURIMap.get(ns6);
+								String qname6 = ename6[1];
+								if (5==paths.length) {
+									FileHandler.appendElementNS(parent6, nsURI6, qname6, value, attributes);
+								} else {
+									System.out.println("appendElementNS XPath dpth is too deep 7.");
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
-	private static void systemOutXML(Document doc)  {
-		try {
-			// Use a Transformer for output
-		    TransformerFactory tFactory = TransformerFactory.newInstance();
-		    Transformer transformer;
-		    transformer = tFactory.newTransformer();
-		    DOMSource source = new DOMSource(doc);
-		    StreamResult result = new StreamResult(System.out);
-			transformer.transform(source, result);
-		} catch (TransformerException | TransformerFactoryConfigurationError e1) {
-			e1.printStackTrace();
-		}
-	}
 
-	private static NodeList xpathEvaluate(Node node, String path) {
-		XPathExpression expr = null;
-		Object result;
-		try {
-			expr = xpath.compile(path);
-			result = expr.evaluate(node, XPathConstants.NODESET);
-			return (NodeList) result; 
-		} catch (XPathExpressionException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	private static void parseBinding(String fname) {
-		try(BufferedReader fileReader = new BufferedReader(new FileReader(fname)))
-		{	
-		  String line = "";
-		  line = fileReader.readLine();
-		  String[] headers = line.split(",");
-		  //Read the file line by line
-		  while ((line = fileReader.readLine()) != null) {
-		    //Get all tokens available in line
-		    String[] tokens = line.split(",");
-//		    //Verify tokens
-//		    System.out.println(Arrays.toString(tokens));
-			Map<String,String> binding = new HashMap<String, String>();
-		    for (int i = 0; i < headers.length; i++) {
-		    	binding.put(headers[i], tokens[i]);
-		    }
-		    String id = binding.get("id");
-		    if (id!="") {
-		    	bindingDict.put(id, binding);
-		    	bindingList.add(binding);
-		    } 
-		  }
-		}
-		catch (IOException e) {
-		  e.printStackTrace();
-		}
-	}
-
-	private static void parseSkeleton(String skeleton) {
-		try {
-		    //Build DOM
-		    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		    factory.setNamespaceAware(true); // never forget this!
-		    DocumentBuilder builder = factory.newDocumentBuilder();
-		    //Parse XML file
-		    doc = builder.parse(new FileInputStream(new File(skeleton)));
-		    //Create XPath
-		    XPathFactory xpathfactory = XPathFactory.newInstance();
-		    xpath = xpathfactory.newXPath();
-		    xpath.setNamespaceContext(new NamespaceResolver(doc));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
 }

@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -16,23 +17,34 @@ import java.util.TreeMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class FileHandler {
 	static String JP_PINT_CSV = "data/base/jp_pint.csv";
-	static String JP_PINT_XML_SKELTON = "data/base/jp_pint_skelton.xml";
+	static String JP_PINT_XML_SKELTON = "data/base/jp_pint_skeleton.xml";
 	
 	public static Document doc = null;
 	public static XPath xpath = null;
+	public static Element root = null;
+	public static String ROOT_ID = "ibg-00";
+	public static HashMap<String,String> nsURIMap = null;
 	
 	public static Map<String/* id */,Binding> bindingDict = new HashMap<>();
 	public static TreeMap<Integer/* semSort */, Binding> semBindingMap = new TreeMap<>();
@@ -50,10 +62,7 @@ public class FileHandler {
 		  Integer[] parents = new Integer[6];
 		  //Read the file line by line
 		  while ((line = fileReader.readLine()) != null) {
-		    //Get all tokens available in line
 		    String[] tokens = line.split(",");
-//		    //Verify tokens
-//		    System.out.println(Arrays.toString(tokens));
 		    Binding binding = new Binding(0, "", "", "", "", "", 0, "", "");
 		    for (int i = 0; i < headers.length; i++) {
 		    	String key = headers[i].replace("\uFEFF", "");
@@ -96,24 +105,27 @@ public class FileHandler {
 		    }
 		    String id = binding.getID();
 		    String l = binding.getLevel();
-		    Integer sort = binding.getSemSort();
+		    Integer semSort = binding.getSemSort();
+		    Integer synSort = binding.getSynSort();
 		    int level = 0;
 		    if (l.matches("^[0-9]+$")) {
 		    	level = Integer.parseInt(l);
-			    parents[level] = sort;
+			    parents[level] = semSort;
 		    	bindingDict.put(id, binding);
-		    	semBindingMap.put(sort, binding);
+		    	semBindingMap.put(semSort, binding);
+		    	synBindingMap.put(synSort, binding);
+		    	// fill semantic childMap
 			    if (level > 0) {
 			    	int parent_level = level - 1;
-				    Integer parent_sort = parents[parent_level];
+				    Integer parent_semSort = parents[parent_level];
 				    ArrayList<Integer> children = null;
-				    if (childMap.containsKey(parent_sort)) {
-				    	children = childMap.get(parent_sort);
+				    if (childMap.containsKey(parent_semSort)) {
+				    	children = childMap.get(parent_semSort);
 				    } else {
 				    	children = new ArrayList<Integer>();
 				    }
-				    children.add(sort);
-				    childMap.put(parent_sort,children);
+				    children.add(semSort);
+				    childMap.put(parent_semSort,children);
 			    }
 			  }
 		  }
@@ -134,10 +146,46 @@ public class FileHandler {
 		    XPathFactory xpathfactory = XPathFactory.newInstance();
 		    xpath = xpathfactory.newXPath();
 		    xpath.setNamespaceContext(new NamespaceResolver(doc));
+		    // root
+			root = (Element) FileHandler.doc.getChildNodes().item(0);   
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return doc;
+	}
+	
+	public static void parseSkeleton() {
+		String skeleton = JP_PINT_XML_SKELTON;
+		try {
+		    //Build DOM
+		    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		    factory.setNamespaceAware(true); // never forget this!
+		    DocumentBuilder builder = factory.newDocumentBuilder();
+		    //Parse XML file
+		    FileInputStream fis = new FileInputStream(new File(skeleton));
+		    doc = builder.parse(fis);
+		    //Create XPath
+		    XPathFactory xpathfactory = XPathFactory.newInstance();
+		    xpath = xpathfactory.newXPath();
+		    xpath.setNamespaceContext(new NamespaceResolver(doc));
+		    // root
+		 	root = (Element) FileHandler.doc.getChildNodes().item(0);
+		 	nsURIMap = new HashMap<String,String>();
+		 	NamedNodeMap attributes = root.getAttributes();
+		 	for (int i = 0; i < attributes.getLength(); i++) {
+		 		Node attribute = attributes.item(i);
+	            String name = attribute.getNodeName();
+	            if ("xmlns".equals(name)) {
+	            	name = "";
+	            } else {
+	            	name = name.replace("xmlns:","");
+	            }
+	            String value = attribute.getNodeValue();
+	            nsURIMap.put(name, value);
+	        }
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static NodeList getElements(Element parent, String id) {
@@ -148,11 +196,29 @@ public class FileHandler {
 		return nodes;
 	}
 	
+	public static Element appendElementNS(Element parent, String nsURI, String qname, String content, HashMap<String, String> attrMap) {
+		Element e = doc.createElementNS(nsURI, qname);
+		if (content!="") {
+			e.setTextContent(content);
+		}
+		if (null!=attrMap) {
+			for (Map.Entry<String, String> entry : attrMap.entrySet()) {
+	           String name = entry.getKey();
+	           String value = entry.getValue();
+	           Attr attribute = doc.createAttribute(name);
+	           attribute.setValue(value);
+	           e.setAttributeNode(attribute);
+	        }
+		}
+		parent.appendChild(e);
+		return e;
+	}
+	
 	public static TreeMap<Integer, NodeList> getChildren(Node e, String id) {
-		Integer parent_sort = ((Binding) bindingDict.get(id)).getSemSort();
+		Integer parent_semSort = ((Binding) bindingDict.get(id)).getSemSort();
 		Binding parent_binding = (Binding) bindingDict.get(id);
 		String parent_xpath = parent_binding.getXPath();
-		ArrayList<Integer> children = childMap.get(parent_sort);
+		ArrayList<Integer> children = childMap.get(parent_semSort);
 		TreeMap<Integer, NodeList> childList = new TreeMap<>();	
 		for (Integer sort: children) {
 			String childID =  ((Binding) semBindingMap.get(sort)).getID();
@@ -166,22 +232,17 @@ public class FileHandler {
 				xpath += "/text()";
 			}
 			NodeList nodes = xpathEvaluate(e, xpath);
-//			if (nodes.getLength() > 0) {
-//				for (int i = 0; i < nodes.getLength(); i++) {
-//	            	Node node = nodes.item(i);
-//	            	System.out.println("- getChildren " + sort + ":" + childID + node.toString() + " " + xpath);
-//				}
-//			}
 			childList.put(sort, nodes);
 		}
 		return childList;
 	}
 
-	public static NodeList xpathEvaluate(Node node, String path) {
+	public static NodeList xpathEvaluate(Node node, String xPath) {
 		XPathExpression expr = null;
 		Object result;
 		try {
-			expr = xpath.compile(path);
+			xPath = xPath.replace("/Invoice/", "/*/");
+			expr = xpath.compile(xPath);
 			result = expr.evaluate(node, XPathConstants.NODESET);
 			return (NodeList) result; 
 		} catch (XPathExpressionException e) {
@@ -189,6 +250,21 @@ public class FileHandler {
 			return null;
 		}
 	}
+
+	public static void systemOutXML(Document doc)  {
+		try {
+			// Use a Transformer for output
+		    TransformerFactory tFactory = TransformerFactory.newInstance();
+		    Transformer transformer;
+		    transformer = tFactory.newTransformer();
+		    DOMSource source = new DOMSource(doc);
+		    StreamResult result = new StreamResult(System.out);
+			transformer.transform(source, result);
+		} catch (TransformerException | TransformerFactoryConfigurationError e1) {
+			e1.printStackTrace();
+		}
+	}
+
 
 	public static void csvFileWrite(String filename, String charset) {
 		System.out.println(filename + " " + charset);
@@ -208,6 +284,37 @@ public class FileHandler {
                 bw.write("\n");
             }
             bw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+	}
+
+	public static void csvFileRead(String filename, String charset) {
+		System.out.println(filename + " " + charset);
+		Csv2Invoice.header = new ArrayList<String>();
+		Csv2Invoice.tidyData = new ArrayList<ArrayList<String>>();
+		try {
+			FileInputStream fi = new FileInputStream(filename);
+			Charset cs = Charset.forName(charset);
+			InputStreamReader isw = new InputStreamReader(fi, cs);
+			BufferedReader br = new BufferedReader(isw);
+			// header
+			String headerLine = br.readLine();
+			String[] fields = headerLine.split(",");
+			for (String field : fields) {
+				Csv2Invoice.header.add(field);
+			}
+			// data
+			String line;		
+			while ((line = br.readLine()) != null) {
+				fields = line.split(",");
+				ArrayList<String> record = new ArrayList<String>();
+				for (String field : fields) {
+					record.add(field);
+				}
+				Csv2Invoice.tidyData.add(record);
+			}
+            br.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
