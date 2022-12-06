@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.TreeMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -196,10 +198,18 @@ public class FileHandler {
 		return nodes;
 	}
 	
-	public static Element appendElementNS(Element parent, String nsURI, String qname, String content, HashMap<String, String> attrMap) {
-		Element e = doc.createElementNS(nsURI, qname);
+	public static Element appendElementNS(Element parent,
+											String nsURI, 
+											String prefix, 
+											String qname, 
+											String content, 
+											HashMap<String, String> attrMap) {
+		System.out.println("- FileHaldler.appendElementNS "+prefix+":"+qname);
+		Element element = doc.createElementNS(nsURI, qname);
+		// Set the desired namespace and prefix
+		element.setPrefix(prefix);
 		if (content!="") {
-			e.setTextContent(content);
+			element.setTextContent(content);
 		}
 		if (null!=attrMap) {
 			for (Map.Entry<String, String> entry : attrMap.entrySet()) {
@@ -207,11 +217,11 @@ public class FileHandler {
 	           String value = entry.getValue();
 	           Attr attribute = doc.createAttribute(name);
 	           attribute.setValue(value);
-	           e.setAttributeNode(attribute);
+	           element.setAttributeNode(attribute);
 	        }
 		}
-		parent.appendChild(e);
-		return e;
+		parent.appendChild(element);
+		return element;
 	}
 	
 	public static TreeMap<Integer, NodeList> getChildren(Node e, String id) {
@@ -251,23 +261,24 @@ public class FileHandler {
 		}
 	}
 
-	public static void systemOutXML(Document doc)  {
+	public static void writeXML(Document doc, String filename)  {
 		try {
-			// Use a Transformer for output
-		    TransformerFactory tFactory = TransformerFactory.newInstance();
-		    Transformer transformer;
-		    transformer = tFactory.newTransformer();
+		    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		    Transformer transformer = transformerFactory.newTransformer();
 		    DOMSource source = new DOMSource(doc);
-		    StreamResult result = new StreamResult(System.out);
+		    FileOutputStream output = new FileOutputStream(filename);
+			StreamResult result = new StreamResult(output);
+//		    StreamResult result = new StreamResult(System.out);
+	         // pretty print XML
+	        transformer.setOutputProperty(OutputKeys.INDENT, "yes");		    
 			transformer.transform(source, result);
-		} catch (TransformerException | TransformerFactoryConfigurationError e1) {
-			e1.printStackTrace();
+		} catch (FileNotFoundException | TransformerException | TransformerFactoryConfigurationError e) {
+			e.printStackTrace();
 		}
 	}
 
-
 	public static void csvFileWrite(String filename, String charset) {
-		System.out.println(filename + " " + charset);
+		System.out.println("FileHandler.csvFileWrite " + filename + " " + charset);
 		try {
 			FileOutputStream fo = new FileOutputStream(filename);
 			Charset cs = Charset.forName(charset);
@@ -290,7 +301,7 @@ public class FileHandler {
 	}
 
 	public static void csvFileRead(String filename, String charset) {
-		System.out.println(filename + " " + charset);
+		System.out.println("FileHandler.csvFileRead " + filename + " " + charset);
 		Csv2Invoice.header = new ArrayList<String>();
 		Csv2Invoice.tidyData = new ArrayList<ArrayList<String>>();
 		try {

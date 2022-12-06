@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+//import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.w3c.dom.Element;
@@ -20,7 +21,7 @@ public class Invoice2csv {
     static ArrayList<TreeMap<Integer, Integer>> boughMapList = new ArrayList<>();
     static TreeMap<Integer, String> rowMap = new TreeMap<>();
     static TreeMap<String, TreeMap<Integer, String>> rowMapList = new TreeMap<>();
-    // CSV table
+    // semantic data
 	public static ArrayList<String> header = new ArrayList<>();
 	static TreeMap<Integer,String> indexMap = new TreeMap<>();
 	static TreeMap<Integer,String> dataMap = new TreeMap<>();
@@ -30,26 +31,26 @@ public class Invoice2csv {
 		
 		FileHandler.parseBinding();
 		FileHandler.doc = FileHandler.parseInvoice(IN_XML);
-//		Element root = (Element) FileHandler.doc.getChildNodes().item(0);
 //		// cbc:DocumentCurrencyCode
-//		String documentCurrencyCode = getElementValue(root, "ibt-005");//"/*/cbc:DocumentCurrencyCode/text()");
+//		String documentCurrencyCode = FileHandler.getElements(FileHandler.root, "ibt-005").item(0).getNodeValue();//"/*/cbc:DocumentCurrencyCode/text()");
 //	    System.out.println(documentCurrencyCode);
 //	    
 //		// ibt-110 Invoice total TAX amount
-//	    String invoiceTotalTaxAmount = getElementValue(root,"ibt-110");
+//	    String invoiceTotalTaxAmount = FileHandler.getElements(FileHandler.root,"ibt-110").item(0).getNodeValue();
 //	    System.out.println(invoiceTotalTaxAmount);
 //	    
 //	    // ibg-23 TAX BREAKDOWN
-//	    nodes = getElements(root,"ibg-23");
-//	    nodesLength = nodes.getLength();
+//	    NodeList nodes = FileHandler.getElements(FileHandler.root,"ibg-23");
+//	    int nodesLength = nodes.getLength();
 //	    for (int i = 0; i < nodesLength; i++) {	      
-//	        node = nodes.item(i);
-//	        TreeMap<Integer, Node> children = getChildren((Element) node, "ibg-23");
+//	        Element node = (Element) nodes.item(i);
+//	        TreeMap<Integer, NodeList> children = FileHandler.getChildren(node, "ibg-23");
 //	        // Iterating HashMap through for loop
-//	        for (Map.Entry<Integer, Node> child : children.entrySet()) {
+//	        for (Entry<Integer, NodeList> child : children.entrySet()) {
 //	        	System.out.println(child.getKey() + " = " + ((Node) child.getValue()).getNodeValue());	  
 //	        }
 //	    }
+	    
 		for (Map.Entry<String, Binding> entry : FileHandler.bindingDict.entrySet()) {
 			Binding binding = entry.getValue();
 			Integer sort = binding.getSemSort();
