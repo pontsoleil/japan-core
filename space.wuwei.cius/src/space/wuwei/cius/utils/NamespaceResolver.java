@@ -10,7 +10,7 @@ import org.w3c.dom.Document;
 
 public class NamespaceResolver implements NamespaceContext 
 {
-  //Store the source document to search the namespaces
+	//Store the source document to search the namespaces
     private Document sourceDocument;
  
     public NamespaceResolver(Document document) {

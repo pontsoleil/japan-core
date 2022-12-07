@@ -302,8 +302,8 @@ public class FileHandler {
 
 	public static void csvFileRead(String filename, String charset) {
 		System.out.println("FileHandler.csvFileRead " + filename + " " + charset);
-		Csv2Invoice.header = new ArrayList<String>();
-		Csv2Invoice.tidyData = new ArrayList<ArrayList<String>>();
+		Csv2Invoice221207.header = new ArrayList<String>();
+		Csv2Invoice221207.tidyData = new ArrayList<ArrayList<String>>();
 		try {
 			FileInputStream fi = new FileInputStream(filename);
 			Charset cs = Charset.forName(charset);
@@ -313,7 +313,7 @@ public class FileHandler {
 			String headerLine = br.readLine();
 			String[] fields = headerLine.split(",");
 			for (String field : fields) {
-				Csv2Invoice.header.add(field);
+				Csv2Invoice221207.header.add(field);
 			}
 			// data
 			String line;		
@@ -323,7 +323,7 @@ public class FileHandler {
 				for (String field : fields) {
 					record.add(field);
 				}
-				Csv2Invoice.tidyData.add(record);
+				Csv2Invoice221207.tidyData.add(record);
 			}
             br.close();
         } catch (IOException e) {

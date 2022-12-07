@@ -115,7 +115,6 @@ public class WriteXmlDom {
     public static void writeXml(Document doc, 
     							OutputStream output)
             throws TransformerException {
-
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
         DOMSource source = new DOMSource(doc);
