@@ -14,6 +14,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+//import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -48,6 +49,9 @@ public class FileHandler {
 	public static String ROOT_ID = "ibg-00";
 	public static HashMap<String,String> nsURIMap = null;
 	
+	public static ArrayList<String> header = new ArrayList<>();
+    public static ArrayList<ArrayList<String>> tidyData = new ArrayList<>();
+    
 	public static Map<String/* id */,Binding> bindingDict = new HashMap<>();
 	public static TreeMap<Integer/* semSort */, Binding> semBindingMap = new TreeMap<>();
 	static TreeMap<Integer/* synSort */, Binding> synBindingMap = new TreeMap<>();
@@ -55,13 +59,59 @@ public class FileHandler {
 	static TreeMap<Integer/* parent */, TreeMap<Integer/* child */, NodeList/* child */>> childNodeListMap = new TreeMap<>();
     public static TreeMap<Integer/* semSort */, String/* id */> multipleMap = new TreeMap<>();
 
+    public static void main(String[] args) {
+    	String IN_XML = "data/xml/Example1.xml";
+    	
+		FileHandler.parseBinding();
+		FileHandler.doc = FileHandler.parseInvoice(IN_XML);
+		
+	    // ibg-23 TAX BREAKDOWN
+	    NodeList nodes = getElements(root,"ibg-23");
+	    int nodesLength = nodes.getLength();
+	    for (int i = 0; i < nodesLength; i++) {	      
+	        Element node = (Element) nodes.item(i);
+	        TreeMap<Integer, NodeList> childrenMap = getChildren(node, "ibg-23");
+	        // Iterating HashMap through for loop
+	        for (Integer sort : childrenMap.keySet()) {
+	        	Binding binding = semBindingMap.get(sort);
+	        	String id = binding.getID();
+	        	String BT = binding.getBT();
+	        	NodeList children = childrenMap.get(sort);
+	        	Node child = children.item(0);
+	        	if (null!=child) {
+	        		System.out.println(id+" "+BT+" "+child.getNodeValue());
+	        	} else {
+	        		System.out.println(id+" "+BT+" N/A");
+	        	}
+	        }
+	    }
+
+	    // ibt-034-1 - Scheme identifier 
+	    NodeList sellerElectronicAddressSchemeIdentifierAtts = getElements(FileHandler.root,"ibt-034-1");
+	    Node sellerElectronicAddressSchemeIdentifierAtt = sellerElectronicAddressSchemeIdentifierAtts.item(0);
+	    String sellerElectronicAddressSchemeIdentifier = sellerElectronicAddressSchemeIdentifierAtt.getNodeValue();
+	    System.out.println(sellerElectronicAddressSchemeIdentifier);
+	    
+		// cbc:DocumentCurrencyCode
+		NodeList documentCurrencyCodeEls = getElements(root, "ibt-005");//"/*/cbc:DocumentCurrencyCode/text()");
+		Node documentCurrencyCodeEl = documentCurrencyCodeEls.item(0);
+		String documentCurrencyCode = documentCurrencyCodeEl.getTextContent();
+	    System.out.println(documentCurrencyCode);
+	    
+		// ibt-110 Invoice total TAX amount
+	    NodeList invoiceTotalTaxAmountEl = getElements(FileHandler.root,"ibt-110");
+	    String invoiceTotalTaxAmount = invoiceTotalTaxAmountEl.item(0).getTextContent();
+	    System.out.println(invoiceTotalTaxAmount);
+	    
+    }
+    
 	public static void parseBinding() {
 		try (BufferedReader fileReader = new BufferedReader(new FileReader(JP_PINT_CSV)))
 		{
 		  String line = "";
 		  line = fileReader.readLine();
 		  String[] headers = line.split(",");
-		  Integer[] parents = new Integer[6];
+		  Integer[] parents = new Integer[10];
 		  //Read the file line by line
 		  while ((line = fileReader.readLine()) != null) {
 		    String[] tokens = line.split(",");
@@ -106,9 +156,11 @@ public class FileHandler {
 		    	}
 		    }
 		    String id = binding.getID();
-		    String l = binding.getLevel();
+		    String BusinessTerm = binding.getBT();
 		    Integer semSort = binding.getSemSort();
 		    Integer synSort = binding.getSynSort();
+		    String l = binding.getLevel();
+		    System.out.println(id+" "+l+" "+BusinessTerm);
 		    int level = 0;
 		    if (l.matches("^[0-9]+$")) {
 		    	level = Integer.parseInt(l);
@@ -194,40 +246,74 @@ public class FileHandler {
 		Binding binding = (Binding) bindingDict.get(id);
 		String xpath = binding.getXPath();
 		xpath = xpath.replaceAll("/Invoice/", "/*/");
+		if (null==parent) {
+			System.out.println("- FileHaldler.getElements parent null");
+			return null;
+		}
 		NodeList nodes = xpathEvaluate(parent, xpath);
 		return nodes;
 	}
 	
-	public static Element appendElementNS(Element parent,
-											String nsURI, 
-											String prefix, 
-											String qname, 
-											String content, 
-											HashMap<String, String> attrMap) {
+	public static NodeList getXPath(Element parent, String xpath) {
+		xpath = xpath.replaceAll("/Invoice/", "/*/");
+		if (null==parent) {
+			System.out.println("- FileHaldler.getXPath parent null");
+			return null;
+		}
+		NodeList nodes = xpathEvaluate(parent, xpath);
+		return nodes;
+	}
+	
+	public static Element appendElementNS (
+			Element parent,
+			String nsURI, 
+			String prefix, 
+			String qname, 
+			String value, 
+			HashMap<String, String> attrMap ) {
 		System.out.println("- FileHaldler.appendElementNS "+prefix+":"+qname);
-		Element element = doc.createElementNS(nsURI, qname);
-		// Set the desired namespace and prefix
-		element.setPrefix(prefix);
-		if (content!="") {
-			element.setTextContent(content);
+		try {
+			if ("@".equals(qname.substring(0,1))) {
+				String attrName = qname.substring(1, qname.length());
+				Attr attribute = doc.createAttribute(attrName);
+				attribute.setValue(value);
+				parent.setAttributeNode(attribute);
+				return null;
+			} else {
+				Element element = doc.createElementNS(nsURI, qname);
+				element.setPrefix(prefix); // Set the desired namespace and prefix
+				if (value!="") {
+					element.setTextContent(value);					
+				}
+				if (null!=attrMap) {
+					for (Map.Entry<String, String> entry : attrMap.entrySet()) {
+			           String name = entry.getKey();
+			           String attr = entry.getValue();
+			           Attr attribute = doc.createAttribute(name);
+			           attribute.setValue(attr);
+			           element.setAttributeNode(attribute);
+			        }
+				}
+				parent.appendChild(element);				
+				return element;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
 		}
-		if (null!=attrMap) {
-			for (Map.Entry<String, String> entry : attrMap.entrySet()) {
-	           String name = entry.getKey();
-	           String value = entry.getValue();
-	           Attr attribute = doc.createAttribute(name);
-	           attribute.setValue(value);
-	           element.setAttributeNode(attribute);
-	        }
-		}
-		parent.appendChild(element);
-		return element;
+
 	}
 	
 	public static TreeMap<Integer, NodeList> getChildren(Node e, String id) {
+		if (null==e) {
+			return null;
+		}
 		Integer parent_semSort = ((Binding) bindingDict.get(id)).getSemSort();
 		Binding parent_binding = (Binding) bindingDict.get(id);
 		String parent_xpath = parent_binding.getXPath();
+		if (null==parent_semSort || "".equals(parent_xpath)) {
+			return null;
+		}
 		ArrayList<Integer> children = childMap.get(parent_semSort);
 		TreeMap<Integer, NodeList> childList = new TreeMap<>();	
 		for (Integer sort: children) {
@@ -242,7 +328,9 @@ public class FileHandler {
 				xpath += "/text()";
 			}
 			NodeList nodes = xpathEvaluate(e, xpath);
-			childList.put(sort, nodes);
+			if (nodes.getLength() > 0) {
+				childList.put(sort, nodes);
+			}
 		}
 		return childList;
 	}
@@ -252,6 +340,7 @@ public class FileHandler {
 		Object result;
 		try {
 			xPath = xPath.replace("/Invoice/", "/*/");
+			xPath = xPath.replace("/ubl:Invoice/", "/*/");
 			expr = xpath.compile(xPath);
 			result = expr.evaluate(node, XPathConstants.NODESET);
 			return (NodeList) result; 
@@ -269,7 +358,7 @@ public class FileHandler {
 		    FileOutputStream output = new FileOutputStream(filename);
 			StreamResult result = new StreamResult(output);
 //		    StreamResult result = new StreamResult(System.out);
-	         // pretty print XML
+	        // pretty print XML
 	        transformer.setOutputProperty(OutputKeys.INDENT, "yes");		    
 			transformer.transform(source, result);
 		} catch (FileNotFoundException | TransformerException | TransformerFactoryConfigurationError e) {
@@ -285,12 +374,12 @@ public class FileHandler {
 			OutputStreamWriter osw = new OutputStreamWriter(fo, cs);
 			BufferedWriter bw = new BufferedWriter(osw);
 			// header
-			String headerLine = String.join(",", Invoice2csv.header);
+			String headerLine = String.join(",", header);
 			bw.write(headerLine);
             bw.write("\n");
             // data
-            for(int i=0; i < Invoice2csv.tidyData.size(); i++) {
-            	String line = String.join(",", Invoice2csv.tidyData.get(i));
+            for(int i=0; i < tidyData.size(); i++) {
+            	String line = String.join(",", tidyData.get(i));
                 bw.write(line);
                 bw.write("\n");
             }
@@ -302,8 +391,8 @@ public class FileHandler {
 
 	public static void csvFileRead(String filename, String charset) {
 		System.out.println("FileHandler.csvFileRead " + filename + " " + charset);
-		Csv2Invoice221207.header = new ArrayList<String>();
-		Csv2Invoice221207.tidyData = new ArrayList<ArrayList<String>>();
+		header = new ArrayList<String>();
+		tidyData = new ArrayList<ArrayList<String>>();
 		try {
 			FileInputStream fi = new FileInputStream(filename);
 			Charset cs = Charset.forName(charset);
@@ -313,7 +402,7 @@ public class FileHandler {
 			String headerLine = br.readLine();
 			String[] fields = headerLine.split(",");
 			for (String field : fields) {
-				Csv2Invoice221207.header.add(field);
+				header.add(field);
 			}
 			// data
 			String line;		
@@ -323,7 +412,7 @@ public class FileHandler {
 				for (String field : fields) {
 					record.add(field);
 				}
-				Csv2Invoice221207.tidyData.add(record);
+				tidyData.add(record);
 			}
             br.close();
         } catch (IOException e) {

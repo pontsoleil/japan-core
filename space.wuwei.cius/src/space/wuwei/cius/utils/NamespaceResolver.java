@@ -30,8 +30,8 @@ public class NamespaceResolver implements NamespaceContext
         return sourceDocument.lookupPrefix(namespaceURI);
     }
  
-    @SuppressWarnings("rawtypes")
-    public Iterator getPrefixes(String namespaceURI) {
+//    @SuppressWarnings("rawtypes")
+    public Iterator<String> getPrefixes(String namespaceURI) {
         return null;
     }
 }
