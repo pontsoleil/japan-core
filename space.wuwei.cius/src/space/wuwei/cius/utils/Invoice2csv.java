@@ -107,7 +107,6 @@ public class Invoice2csv {
 //		System.out.println(FileHandler.tidyData.toString());			
 	}
 
-
 	private static void fillData (
 			Integer sort, 
 			String value, 
@@ -148,11 +147,13 @@ public class Invoice2csv {
 		Binding binding = FileHandler.semBindingMap.get(sort);
 		String id = binding.getID();
 		String businessTerm = binding.getBT();
-		String xPath = binding.getXPath();
+//		String xPath = binding.getXPath();
 
 		TreeMap<Integer, NodeList> childList = FileHandler.getChildren(parent, id);
 		
-		if (childList.size() == 0) {
+		if (childList.size() > 0) {
+			System.out.println("- fillGroup boughMapList=" + boughMapList.toString() + sort + ":" + id + " " + businessTerm );
+		} else {
 			System.out.println("- fillGroup boughMapList=" + boughMapList.toString() + sort + ":" + id + " " + businessTerm + " is Empty" );
 			return;
 		}
@@ -167,28 +168,29 @@ public class Invoice2csv {
             
             Integer countNodes = nodes.getLength();             
             if (countNodes > 0) {
-            	if (childID.matches("^ibg-[0-9]+$")) {
-					System.out.println("- fillGroup "+ childLevel + " childList " + childSort + ":" + childID + nodes.item(0).toString() );
-	            }
 	            for (int i = 0; i < countNodes; i++) {
 	            	Node node = nodes.item(i);
 		        	if (childID.matches("^ibt-[0-9]+.*$")) {
 	        			String value = node.getTextContent();
 		            	if (!(null==value || value.equals(""))) {
+		            		
 			            	fillData(childSort, value, boughMapList);
+			            	
 		            	} else {	            		
 		            		NamedNodeMap attributes = node.getAttributes();
 		            		String attrNames[] = {"schemeID","currencyID","mimeCode","filename","listID","listVersionID"};
-		            		for (int j = 0; j < attrNames.length; i++){
-			            		String value1 = attributes.getNamedItem(attrNames[i]).getNodeValue();
+		            		for (int j = 0; j < attrNames.length; j++){
+			            		String value1 = attributes.getNamedItem(attrNames[j]).getNodeValue();
 			            		if (!(null==value1 || value1.equals(""))) {
+			            			
 			            			fillData(childSort, value1, boughMapList);
+			            			
 								}			            		
 		            		}
 		            	}
 		            } else {
-		            	boolean isKeyPresent = isMultiple(childSort);
-		                if (isKeyPresent && countNodes > 1) {
+		            	boolean is_multiple = isMultiple(childSort);
+		                if (is_multiple && countNodes > 1) {
 		                	TreeMap<Integer,Integer> boughMap = boughMapList.get(boughMapList.size() - 1);
 		                	Integer lastkey = boughMap.lastKey();
 		                	Integer lastvalue = boughMap.get(lastkey);
@@ -210,6 +212,7 @@ public class Invoice2csv {
 			            	}
 		                }
 	                	System.out.println("* fillGroup "+ childLevel + " boughMapList=" + boughMapList.toString() /*+ sort +":" + id + " "*/ + businessTerm + "->" /*+ childSort + ":" + childID + " "*/ + childBusinessTerm );
+
 	                	fillGroup(node, childSort, boughMapList);
 		            }
 	            }

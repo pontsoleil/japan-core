@@ -125,28 +125,28 @@ public class FileHandler {
 			System.out.println("ibt-160"+i+" "+value);
 		}
 		
-//	    NodeList nodes = getElements(root, "ibg-23");
-//	    int nodesLength = nodes.getLength();
-//	    for (int i = 0; i < nodesLength; i++) {	      
-//	        Element node = (Element) nodes.item(i);
-//	        TreeMap<Integer, NodeList> childrenMap = getChildren(node, "ibg-23");
-//	        // Iterating HashMap through for loop
-//	        for (Integer sort : childrenMap.keySet()) {
-//	        	Binding binding = semBindingMap.get(sort);
-//	        	String id = binding.getID();
-//	        	String BT = binding.getBT();
-//	        	NodeList children = childrenMap.get(sort);
-//	        	Node child = children.item(0);
-//	        	if (null!=child) {
-//	        		System.out.println(id+" "+BT+" "+child.getNodeValue());
-//	        	} else {
-//	        		System.out.println(id+" "+BT+" N/A");
-//	        	}
-//	        }
-//	    }
+		// ibg-23 TAX BREAKDOWN <cac:TaxSubtotal>
+		nodes = getElements(root, "ibg-23");
+	    int nodesLength = nodes.getLength();
+	    for (int i = 0; i < nodesLength; i++) {	      
+	        Element node = (Element) nodes.item(i);
+	        TreeMap<Integer, NodeList> childrenMap = getChildren(node, "ibg-23");
+	        // Iterating HashMap through for loop
+	        for (Integer sort : childrenMap.keySet()) {
+	        	Binding binding = semBindingMap.get(sort);
+	        	String id = binding.getID();
+	        	String BT = binding.getBT();
+	        	NodeList children = childrenMap.get(sort);
+	        	Node child = children.item(0);
+	        	if (null!=child) {
+	        		System.out.println(id+" "+BT+" "+child.getNodeValue());
+	        	} else {
+	        		System.out.println(id+" "+BT+" N/A");
+	        	}
+	        }
+	    }
 
 	    // ibt-034-1 - Scheme identifier 
-		
 	    NodeList sellerElectronicAddressSchemeIdentifierAtts = getElements(FileHandler.root, "ibt-034-1");
 	    Node sellerElectronicAddressSchemeIdentifierAtt = sellerElectronicAddressSchemeIdentifierAtts.item(0);
 	    String sellerElectronicAddressSchemeIdentifier = sellerElectronicAddressSchemeIdentifierAtt.getNodeValue();
@@ -406,36 +406,33 @@ public class FileHandler {
 	}
 	
 	public static TreeMap<Integer, NodeList> getChildren(Node e, String id) {
-		if (null==e) {
-			return null;
-		}
 		TreeMap<Integer, NodeList> childList = new TreeMap<>();	
-		
 		Integer semSort = ((Binding) bindingDict.get(id)).getSemSort();
 		Binding binding = (Binding) bindingDict.get(id);
 		String xpath = binding.getXPath();
-		if (null==semSort || "".equals(xpath)) {
-			return null;
-		}
-		if (semSort > 1000) {
-			Integer parent_semSort = parentMap.get(semSort);
-			Binding parent_binding = semBindingMap.get(parent_semSort);
-			String parent_xpath = parent_binding.getXPath();
-			if (! parent_xpath.equals("/Invoice") && ! parent_xpath.equals("/ubl:Invoice")) {
-				xpath = xpath.replace(parent_xpath, ".");
-			}
-		}
+//		String parent_xpath;
+//		if (semSort > 1000) {
+//			Integer parent_semSort = parentMap.get(semSort);
+//			Binding parent_binding = semBindingMap.get(parent_semSort);
+//			parent_xpath = parent_binding.getXPath();
+//			if (! parent_xpath.equals("/Invoice") && ! parent_xpath.equals("/ubl:Invoice")) {
+//				xpath = xpath.replace(parent_xpath, ".");
+//			}
+//		}
+		
 		ArrayList<Integer> children = childMap.get(semSort);
 		for (Integer sort: children) {
-			String childID =  ((Binding) semBindingMap.get(sort)).getID();
-			Binding child_binding = (Binding) bindingDict.get(childID);
+			Binding child_binding = (Binding) semBindingMap.get(sort);
+			String childID =  child_binding.getID();
+			String child_datatype = child_binding.getDatatype();
 			String child_xpath = child_binding.getXPath();
 			if (! xpath.equals("/Invoice") && ! xpath.equals("/ubl:Invoice")) {
 				child_xpath = child_xpath.replace(xpath, ".");
 			}
 			child_xpath = child_xpath.replace("/Invoice/", "/*/");
 			child_xpath = child_xpath.replace("/ubl:Invoice/", "/*/");
-			if (childID.matches("^ibt-.*$")) {
+			
+			if (childID.matches("^ibt-.*$") && ! "String".equals(child_datatype)) {
 				child_xpath += "/text()";
 			}
 			
