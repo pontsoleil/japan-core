@@ -148,6 +148,7 @@ public class Invoice2csv {
 		Binding binding = FileHandler.semBindingMap.get(sort);
 		String id = binding.getID();
 		String businessTerm = binding.getBT();
+		String xPath = binding.getXPath();
 
 		TreeMap<Integer, NodeList> childList = FileHandler.getChildren(parent, id);
 		
@@ -163,6 +164,7 @@ public class Invoice2csv {
     		int childLevel = Integer.parseInt(childBinding.getLevel());
            
             NodeList nodes = childList.get(childSort);
+            
             Integer countNodes = nodes.getLength();             
             if (countNodes > 0) {
             	if (childID.matches("^ibg-[0-9]+$")) {

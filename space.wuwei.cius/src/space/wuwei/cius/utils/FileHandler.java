@@ -47,61 +47,121 @@ public class FileHandler {
 	public static XPath xpath = null;
 	public static Element root = null;
 	public static String ROOT_ID = "ibg-00";
-	public static HashMap<String,String> nsURIMap = null;
+	public static HashMap<String, String> nsURIMap = null;
 	
 	public static ArrayList<String> header = new ArrayList<>();
     public static ArrayList<ArrayList<String>> tidyData = new ArrayList<>();
     
-	public static Map<String/* id */,Binding> bindingDict = new HashMap<>();
-	public static TreeMap<Integer/* semSort */, Binding> semBindingMap = new TreeMap<>();
-	static TreeMap<Integer/* synSort */, Binding> synBindingMap = new TreeMap<>();
-	public static TreeMap<Integer/* parent */, ArrayList<Integer/* child */>> childMap = new TreeMap<>();
-	static TreeMap<Integer/* parent */, TreeMap<Integer/* child */, NodeList/* child */>> childNodeListMap = new TreeMap<>();
-    public static TreeMap<Integer/* semSort */, String/* id */> multipleMap = new TreeMap<>();
+	public static Map<
+		String/* id */,
+		Binding> bindingDict = new HashMap<>();
+	public static TreeMap<
+		Integer/* semSort */, 
+		Binding> semBindingMap = new TreeMap<>();
+	static TreeMap<
+		Integer/* synSort */, 
+		Binding> synBindingMap = new TreeMap<>();
+	public static TreeMap<
+		Integer/* parent semSort */, 
+		ArrayList<Integer/* child semSort */>> childMap = new TreeMap<>();
+	public static TreeMap<
+		Integer/* child semSort */, 
+		Integer/* parent semSort */> parentMap = new TreeMap<>();
+    public static TreeMap<
+    	Integer/* semSort */, 
+    	String/* id */> multipleMap = new TreeMap<>();
+
+    public static TreeMap<
+    	Integer/* semSort */, 
+    	ParsedNode> nodeMap = new TreeMap<>();
 
     public static void main(String[] args) {
-    	String IN_XML = "data/xml/Example1.xml";
+    	String IN_XML = "data/xml/Example0.xml";
     	
-		FileHandler.parseBinding();
-		FileHandler.doc = FileHandler.parseInvoice(IN_XML);
+		parseBinding();
+		doc = parseInvoice(IN_XML);
+		parseDoc();
 		
 	    // ibg-23 TAX BREAKDOWN
-	    NodeList nodes = getElements(root,"ibg-23");
-	    int nodesLength = nodes.getLength();
-	    for (int i = 0; i < nodesLength; i++) {	      
-	        Element node = (Element) nodes.item(i);
-	        TreeMap<Integer, NodeList> childrenMap = getChildren(node, "ibg-23");
-	        // Iterating HashMap through for loop
-	        for (Integer sort : childrenMap.keySet()) {
-	        	Binding binding = semBindingMap.get(sort);
-	        	String id = binding.getID();
-	        	String BT = binding.getBT();
-	        	NodeList children = childrenMap.get(sort);
-	        	Node child = children.item(0);
-	        	if (null!=child) {
-	        		System.out.println(id+" "+BT+" "+child.getNodeValue());
-	        	} else {
-	        		System.out.println(id+" "+BT+" N/A");
-	        	}
-	        }
-	    }
+		Binding ibg23Bindingt = bindingDict.get("ibg-23");
+		Integer ibg23Sort = ibg23Bindingt.getSemSort();
+		ArrayList<Integer> childSorts = childMap.get(ibg23Sort);
+		for (Integer childSort : childSorts) {
+			ParsedNode parsedNode = nodeMap.get(childSort);
+			NodeList nodes = parsedNode.nodes;
+			for (int i = 0; i < nodes.getLength(); i++) {
+				String value = "";
+				Node node = nodes.item(i);
+				System.out.println(i+" "+node.getNodeName()+" "+node.getTextContent());
+				if (node.hasAttributes()) {
+					NamedNodeMap attributes = node.getAttributes();
+					int attrLength = attributes.getLength();
+					for (int j = 0; j < attrLength; j++) {
+						Node attribute = attributes.item(j);
+				        String name = attribute.getNodeName();
+				        if ("currencyID".equals(name)) {
+				           value = attribute.getNodeValue();
+				           System.out.println(" "+value);
+				        }
+					} 
+				}
+			}
+		}
+	
+	    // ibt-034-1 - Scheme identifier 
+		Binding ibt34_1Binding = bindingDict.get("ibt-034-1");
+		Integer ibg34_1Sort = ibt34_1Binding.getSemSort();
+		ParsedNode parsedNode = nodeMap.get(ibg34_1Sort);
+		NodeList nodes = parsedNode.nodes;
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Node node = nodes.item(i);
+			System.out.println(i+" "+node.getNodeName()+" "+node.getTextContent());
+		}
+		
+		// ibt-160 Item attribute name
+		TreeMap<Integer, String> nodeValues = getNodeValues("ibt-160");
+		for (int i = 0; i <nodeValues.size(); i++) {
+			String value = nodeValues.get(i);
+			System.out.println("ibt-160"+i+" "+value);
+		}
+		
+//	    NodeList nodes = getElements(root, "ibg-23");
+//	    int nodesLength = nodes.getLength();
+//	    for (int i = 0; i < nodesLength; i++) {	      
+//	        Element node = (Element) nodes.item(i);
+//	        TreeMap<Integer, NodeList> childrenMap = getChildren(node, "ibg-23");
+//	        // Iterating HashMap through for loop
+//	        for (Integer sort : childrenMap.keySet()) {
+//	        	Binding binding = semBindingMap.get(sort);
+//	        	String id = binding.getID();
+//	        	String BT = binding.getBT();
+//	        	NodeList children = childrenMap.get(sort);
+//	        	Node child = children.item(0);
+//	        	if (null!=child) {
+//	        		System.out.println(id+" "+BT+" "+child.getNodeValue());
+//	        	} else {
+//	        		System.out.println(id+" "+BT+" N/A");
+//	        	}
+//	        }
+//	    }
 
 	    // ibt-034-1 - Scheme identifier 
-	    NodeList sellerElectronicAddressSchemeIdentifierAtts = getElements(FileHandler.root,"ibt-034-1");
+		
+	    NodeList sellerElectronicAddressSchemeIdentifierAtts = getElements(FileHandler.root, "ibt-034-1");
 	    Node sellerElectronicAddressSchemeIdentifierAtt = sellerElectronicAddressSchemeIdentifierAtts.item(0);
 	    String sellerElectronicAddressSchemeIdentifier = sellerElectronicAddressSchemeIdentifierAtt.getNodeValue();
-	    System.out.println(sellerElectronicAddressSchemeIdentifier);
+	    System.out.println("ibt-034-1 "+sellerElectronicAddressSchemeIdentifier);
 	    
 		// cbc:DocumentCurrencyCode
 		NodeList documentCurrencyCodeEls = getElements(root, "ibt-005");//"/*/cbc:DocumentCurrencyCode/text()");
 		Node documentCurrencyCodeEl = documentCurrencyCodeEls.item(0);
 		String documentCurrencyCode = documentCurrencyCodeEl.getTextContent();
-	    System.out.println(documentCurrencyCode);
+	    System.out.println("ibt-005 "+documentCurrencyCode);
 	    
 		// ibt-110 Invoice total TAX amount
-	    NodeList invoiceTotalTaxAmountEl = getElements(FileHandler.root,"ibt-110");
+	    NodeList invoiceTotalTaxAmountEl = getElements(FileHandler.root, "ibt-110");
 	    String invoiceTotalTaxAmount = invoiceTotalTaxAmountEl.item(0).getTextContent();
-	    System.out.println(invoiceTotalTaxAmount);
+	    System.out.println("ibt-110 "+invoiceTotalTaxAmount);
 	    
     }
     
@@ -160,14 +220,18 @@ public class FileHandler {
 		    Integer semSort = binding.getSemSort();
 		    Integer synSort = binding.getSynSort();
 		    String l = binding.getLevel();
+		    
 		    System.out.println(id+" "+l+" "+BusinessTerm);
+		    
 		    int level = 0;
 		    if (l.matches("^[0-9]+$")) {
 		    	level = Integer.parseInt(l);
 			    parents[level] = semSort;
+			    
 		    	bindingDict.put(id, binding);
 		    	semBindingMap.put(semSort, binding);
 		    	synBindingMap.put(synSort, binding);
+		    	
 		    	// fill semantic childMap
 			    if (level > 0) {
 			    	int parent_level = level - 1;
@@ -180,6 +244,9 @@ public class FileHandler {
 				    }
 				    children.add(semSort);
 				    childMap.put(parent_semSort,children);
+				    for (Integer child_semSort: children) {
+				    	parentMap.put(child_semSort,parent_semSort);
+				    }
 			    }
 			  }
 		  }
@@ -188,6 +255,7 @@ public class FileHandler {
 		  e.printStackTrace();
 		}
 	}
+	
 
 	public static Document parseInvoice(String xmlfile) {
 		try {
@@ -201,11 +269,21 @@ public class FileHandler {
 		    xpath = xpathfactory.newXPath();
 		    xpath.setNamespaceContext(new NamespaceResolver(doc));
 		    // root
-			root = (Element) FileHandler.doc.getChildNodes().item(0);   
+			root = (Element) FileHandler.doc.getChildNodes().item(0);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return doc;
+	}
+	
+	public static void parseDoc() {
+		for (Integer semSort: semBindingMap.keySet()) {
+			Binding binding = semBindingMap.get(semSort);
+			String xPath = binding.getXPath();
+			NodeList nodes = getXPath(root, xPath);
+			ParsedNode parsedNode = new ParsedNode(binding, nodes);
+			nodeMap.put(semSort, parsedNode);
+		}		
 	}
 	
 	public static void parseSkeleton() {
@@ -242,15 +320,38 @@ public class FileHandler {
 		}
 	}
 	
+	public static TreeMap<Integer, String> getNodeValues(String id) {
+		TreeMap<Integer, String> nodeValueMap = new TreeMap<>();
+		Binding binding = bindingDict.get(id);
+		Integer sort = binding.getSemSort();
+		ParsedNode parsedNode = nodeMap.get(sort);
+		NodeList nodes = parsedNode.nodes;
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Node node = nodes.item(i);
+			String value = node.getTextContent();
+			nodeValueMap.put(i, value);
+			System.out.println(i+" "+node.getNodeName()+" "+value);
+		}
+		return nodeValueMap;
+	}
+	
 	public static NodeList getElements(Element parent, String id) {
 		Binding binding = (Binding) bindingDict.get(id);
 		String xpath = binding.getXPath();
 		xpath = xpath.replaceAll("/Invoice/", "/*/");
+		xpath = xpath.replaceAll("/ubl:Invoice/", "/*/");
 		if (null==parent) {
 			System.out.println("- FileHaldler.getElements parent null");
 			return null;
 		}
+		xpath = xpath.replace("/Invoice/", "/*/");
+		xpath = xpath.replace("/ubl:Invoice/", "/*/");
+		if (id.matches("^ibt-[0-9]+$")) {
+			xpath += "/text()";
+		}
+		
 		NodeList nodes = xpathEvaluate(parent, xpath);
+		
 		return nodes;
 	}
 	
@@ -308,26 +409,38 @@ public class FileHandler {
 		if (null==e) {
 			return null;
 		}
-		Integer parent_semSort = ((Binding) bindingDict.get(id)).getSemSort();
-		Binding parent_binding = (Binding) bindingDict.get(id);
-		String parent_xpath = parent_binding.getXPath();
-		if (null==parent_semSort || "".equals(parent_xpath)) {
+		TreeMap<Integer, NodeList> childList = new TreeMap<>();	
+		
+		Integer semSort = ((Binding) bindingDict.get(id)).getSemSort();
+		Binding binding = (Binding) bindingDict.get(id);
+		String xpath = binding.getXPath();
+		if (null==semSort || "".equals(xpath)) {
 			return null;
 		}
-		ArrayList<Integer> children = childMap.get(parent_semSort);
-		TreeMap<Integer, NodeList> childList = new TreeMap<>();	
-		for (Integer sort: children) {
-			String childID =  ((Binding) semBindingMap.get(sort)).getID();
-			Binding binding = (Binding) bindingDict.get(childID);
-			String xpath = binding.getXPath();
-			if (! parent_xpath.equals("/Invoice")) {
+		if (semSort > 1000) {
+			Integer parent_semSort = parentMap.get(semSort);
+			Binding parent_binding = semBindingMap.get(parent_semSort);
+			String parent_xpath = parent_binding.getXPath();
+			if (! parent_xpath.equals("/Invoice") && ! parent_xpath.equals("/ubl:Invoice")) {
 				xpath = xpath.replace(parent_xpath, ".");
 			}
-			xpath = xpath.replace("/Invoice/", "/*/");
-			if (childID.matches("^ibt-.*$")) {
-				xpath += "/text()";
+		}
+		ArrayList<Integer> children = childMap.get(semSort);
+		for (Integer sort: children) {
+			String childID =  ((Binding) semBindingMap.get(sort)).getID();
+			Binding child_binding = (Binding) bindingDict.get(childID);
+			String child_xpath = child_binding.getXPath();
+			if (! xpath.equals("/Invoice") && ! xpath.equals("/ubl:Invoice")) {
+				child_xpath = child_xpath.replace(xpath, ".");
 			}
-			NodeList nodes = xpathEvaluate(e, xpath);
+			child_xpath = child_xpath.replace("/Invoice/", "/*/");
+			child_xpath = child_xpath.replace("/ubl:Invoice/", "/*/");
+			if (childID.matches("^ibt-.*$")) {
+				child_xpath += "/text()";
+			}
+			
+			NodeList nodes = xpathEvaluate(e, child_xpath);
+			
 			if (nodes.getLength() > 0) {
 				childList.put(sort, nodes);
 			}
@@ -342,7 +455,9 @@ public class FileHandler {
 			xPath = xPath.replace("/Invoice/", "/*/");
 			xPath = xPath.replace("/ubl:Invoice/", "/*/");
 			expr = xpath.compile(xPath);
+			
 			result = expr.evaluate(node, XPathConstants.NODESET);
+			
 			return (NodeList) result; 
 		} catch (XPathExpressionException e) {
 			e.printStackTrace();

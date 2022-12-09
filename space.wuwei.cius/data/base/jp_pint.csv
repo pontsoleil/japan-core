@@ -36,16 +36,16 @@
 1340,ibt-027,1..1,2,Seller name,売り手名称,Text,1780,cbc:RegistrationName,udt:NameType,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName,0..1
 1350,ibt-028,0..1,2,Seller trading name,売り手商号,Text,1580,cbc:Name,udt:NameType,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyName/cbc:Name,1..1
 1360,ibt-029,0..n,2,Seller identifier,売り手ID,Identifier,1550,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID[not(@schemeID='SEPA')],1..1
-1370,ibt-029-1,0..1,3,Seller identifier Scheme identifier,スキーマID,String,1560,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID[not(@schemeID='SEPA')]/@schemeID,0..1
+1370,ibt-029-1,0..1,2,Seller identifier Scheme identifier,スキーマID,String,1560,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID[not(@schemeID='SEPA')]/@schemeID,0..1
 1380,ibt-030,0..1,2,Seller legal registration identifier,売り手法人ID,Identifier,1790,cbc:CompanyID,udt:IdentifierType,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID,0..1
-1390,ibt-030-1,0..1,3,Seller legal registration identifier Scheme identifier,スキーマID,String,1800,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID/@schemeID,0..1
+1390,ibt-030-1,0..1,2,Seller legal registration identifier Scheme identifier,スキーマID,String,1800,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID/@schemeID,0..1
 1400,ibt-031,0..1,2,Seller TAX identifier,売り手税ID,Identifier,1700,cbc:CompanyID,udt:IdentifierType,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme[cac:TaxScheme/cbc:ID='VAT']/cbc:CompanyID/@schemeID,0..1
-1405,ibt-031-1,0..1,3,Seller TAX identifier Scheme identifier,スキーマID,String,1701,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme[cac:TaxScheme/cbc:ID='VAT']/cbc:CompanyID,0..1
+1405,ibt-031-1,0..1,2,Seller TAX identifier Scheme identifier,スキーマID,String,1701,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme[cac:TaxScheme/cbc:ID='VAT']/cbc:CompanyID,0..1
 1410,ibt-032,0..1,2,Seller TAX registration identifier,売り手税登録ID,Identifier,1740,cbc:CompanyID,udt:IdentifierType,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme[cac:TaxScheme/cbc:ID!='VAT']/cbc:CompanyID,0..1
-1415,ibt-032-1,0..1,3,Seller TAX registration identifier Scheme identifier,スキーマID,String,1741,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme[cac:TaxScheme/cbc:ID!='VAT']/cbc:CompanyID/@schemeID,0..1
+1415,ibt-032-1,0..1,2,Seller TAX registration identifier Scheme identifier,スキーマID,String,1741,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme[cac:TaxScheme/cbc:ID!='VAT']/cbc:CompanyID/@schemeID,0..1
 1420,ibt-033,0..1,2,Seller additional legal information,売り手追加法的情報,Text,1810,cbc:CompanyLegalForm,udt:TextType,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyLegalForm,0..1
 1430,ibt-034,1..1,2,Seller electronic address,売り手電子アドレス,Identifier,1490,cbc:EndpointID,udt:IdentifierType,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cbc:EndpointID,0..1
-1440,ibt-034-1,1..1,3,Seller electronic address Scheme identifier,スキーマID,String,1500,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cbc:EndpointID/@schemeID,0..1
+1440,ibt-034-1,1..1,2,Seller electronic address Scheme identifier,スキーマID,String,1500,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cbc:EndpointID/@schemeID,0..1
 1450,ibt-090,0..1,3,Bank assigned creditor identifier,銀行が採番した債権者の識別子,Identifier,1520,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID[@schemeID='SEPA'],1..1
 1460,ibg-05,1..1,2,SELLER POSTAL ADDRESS,売り手住所,,1590,cac:PostalAddress,cac:AddressType,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress,0..1
 1470,ibt-035,0..1,3,Seller address line 1,売り手住所欄1,Text,1600,cbc:StreetName,udt:NameType,/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:StreetName,0..1
@@ -63,12 +63,12 @@
 1590,ibt-044,1..1,2,Buyer name,買い手名称,Text,2110,cbc:RegistrationName,udt:NameType,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName,0..1
 1600,ibt-045,0..1,2,Buyer trading name,買い手商号,Text,1940,cbc:Name,udt:NameType,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyName/cbc:Name,1..1
 1610,ibt-046,0..1,2,Buyer identifier,買い手ID,Identifier,1910,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID,1..1
-1620,ibt-046-1,0..1,3,Buyer identifier Scheme identifier,スキーマID,String,1920,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID/@schemeID,0..1
+1620,ibt-046-1,0..1,2,Buyer identifier Scheme identifier,スキーマID,String,1920,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID/@schemeID,0..1
 1630,ibt-047,0..1,2,Buyer legal registration identifier,買い手法人ID,Identifier,2120,cbc:CompanyID,udt:IdentifierType,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID,0..1
-1640,ibt-047-1,0..1,3,Buyer legal registration identifier Scheme identifier,スキーマID,String,2130,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID/@schemeID,0..1
+1640,ibt-047-1,0..1,2,Buyer legal registration identifier Scheme identifier,スキーマID,String,2130,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID/@schemeID,0..1
 1650,ibt-048,0..1,2,Buyer TAX identifier,買い手税ID,Identifier,2060,cbc:CompanyID,udt:IdentifierType,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID,0..1
 1660,ibt-049,1..1,2,Buyer electronic address,買い手電子アドレス,Identifier,1880,cbc:EndpointID,udt:IdentifierType,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cbc:EndpointID,0..1
-1670,ibt-049-1,1..1,3,Buyer electronic address Scheme identifier,スキーマID,String,1890,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cbc:EndpointID/@schemeID,0..1
+1670,ibt-049-1,1..1,2,Buyer electronic address Scheme identifier,スキーマID,String,1890,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cbc:EndpointID/@schemeID,0..1
 1680,ibg-08,1..1,2,BUYER POSTAL ADDRESS,買い手住所,,1950,cac:PostalAddress,cac:AddressType,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress,0..1
 1690,ibt-050,0..1,3,Buyer address line 1,買い手住所欄1,Text,1960,cbc:StreetName,udt:NameType,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName,0..1
 1700,ibt-051,0..1,3,Buyer address line 2,買い手住所欄2,Text,1970,cbc:AdditionalStreetName,udt:NameType,/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:AdditionalStreetName,0..1
@@ -86,7 +86,7 @@
 1820,ibt-060,0..1,2,Payee identifier,支払先ID,Identifier,2200,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:PayeeParty/cac:PartyIdentification/cbc:ID,1..1
 1830,ibt-060-1,0..1,2,Payee identifier Scheme identifier,スキーマID,String,2210,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:PayeeParty/cac:PartyIdentification/cbc:ID/@schemeID,0..1
 1840,ibt-061,0..1,2,Payee legal registration identifier,支払先登録企業ID,Identifier,2250,cbc:CompanyID,udt:IdentifierType,/ubl:Invoice/cac:PayeeParty/cac:PartyLegalEntity/cbc:CompanyID,0..1
-1850,ibt-061-1,0..1,3,Payee legal registration identifier Scheme identifier,スキーマID,String,2260,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:PayeeParty/cac:PartyLegalEntity/cbc:CompanyID/@schemeID,0..1
+1850,ibt-061-1,0..1,2,Payee legal registration identifier Scheme identifier,スキーマID,String,2260,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:PayeeParty/cac:PartyLegalEntity/cbc:CompanyID/@schemeID,0..1
 1860,ibg-11,0..1,1,SELLER TAX REPRESENTATIVE PARTY,売り手税務代理人,,2270,cac:TaxRepresentativeParty,cac:PartyType,/ubl:Invoice/cac:TaxRepresentativeParty,0..1
 1870,ibt-062,1..1,2,Seller tax representative name,売り手税務代理人名称,Text,2290,cbc:Name,udt:NameType,/ubl:Invoice/cac:TaxRepresentativeParty/cac:PartyName/cbc:Name,1..1
 1880,ibt-063,1..1,2,Seller tax representative TAX identifier,売り手税務代理人税ID,Identifier,2410,cbc:CompanyID,udt:IdentifierType,/ubl:Invoice/cac:TaxRepresentativeParty/cac:PartyTaxScheme/cbc:CompanyID,0..1
@@ -119,7 +119,7 @@
 2150,ibt-081,1..1,2,Payment means type code,支払手段タイプコード,Code,2640,cbc:PaymentMeansCode,udt:CodeType,/ubl:Invoice/cac:PaymentMeans/cbc:PaymentMeansCode,1..1
 2160,ibt-082,0..1,2,Payment means text,支払手段内容説明,String,2650,@name,xsd:string,/ubl:Invoice/cac:PaymentMeans/cbc:PaymentMeansCode/@name,0..1
 2170,ibt-083,0..n,2,Remittance information,送金情報,Text,2660,cbc:PaymentID,udt:IdentifierType,/ubl:Invoice/cac:PaymentMeans/cbc:PaymentID,0..n
-2180,ibt-083-1,0..1,3,Remittance information Scheme identifier,スキーマID,String,2670,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:PaymentMeans/cbc:PaymentID/@schemeID,0..1
+2180,ibt-083-1,0..1,2,Remittance information Scheme identifier,スキーマID,String,2670,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:PaymentMeans/cbc:PaymentID/@schemeID,0..1
 2190,ibg-17,0..1,2,CREDIT TRANSFER,銀行振込,,2720,cac:PayeeFinancialAccount,cac:FinancialAccountType,/ubl:Invoice/cac:PaymentMeans/cac:PayeeFinancialAccount,0..1
 2200,ibt-084,1..1,3,Payment account identifier,支払先口座ID,Identifier,2730,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID,0..1
 2210,ibt-084-1,0..1,3,Payment account identifier Scheme identifier,スキーマID,String,2740,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID/@schemeID,0..1
@@ -151,7 +151,7 @@
 2470,ibt-097,0..1,2,Document level allowance reason,請求書レベルの返金の理由,Text,3050,cbc:AllowanceChargeReason,udt:TextType,/ubl:Invoice/cac:AllowanceCharge[cbc:ChargeIndicator=false()]/cbc:AllowanceChargeReason,0..n
 2480,ibt-098,0..1,2,Document level allowance reason code,請求書レベルの返金の理由コード,Code,3040,cbc:AllowanceChargeReasonCode,udt:CodeType,/ubl:Invoice/cac:AllowanceCharge[cbc:ChargeIndicator=false()]/cbc:AllowanceChargeReasonCode,0..1
 2490,ibt-095,1..1,2,Document level allowance TAX category code,請求書レベルの返金の課税分類コード,Code,3120,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:AllowanceCharge[cbc:ChargeIndicator=false()]/cac:TaxCategory/cbc:ID,0..1
-2500,ibt-095-1,1..1,3,Document level allowance TAX category code Tax Scheme,,Code,3180,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:AllowanceCharge[cbc:ChargeIndicator=false()]/cac:TaxCategory/cac:TaxScheme/cbc:ID,1..1
+2500,ibt-095-1,1..1,2,Document level allowance TAX category code Tax Scheme,,Code,3180,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:AllowanceCharge[cbc:ChargeIndicator=false()]/cac:TaxCategory/cac:TaxScheme/cbc:ID,1..1
 2510,ibt-096,0..1,2,Document level allowance TAX rate,請求書レベルの返金の税率,Percentage,3140,cbc:Percent,udt:PercentType,/ubl:Invoice/cac:AllowanceCharge[cbc:ChargeIndicator=false()]/cac:TaxCategory/cbc:Percent,0..1
 2520,ibt-196,0..0,2,Document level allowance TAX exemption reason code,請求書レベルの返金の非課税理由テキスト,Code,3150,cbc:TaxExemptionReasonCode,udt:CodeType,/ubl:Invoice/cac:AllowanceCharge[cbc:ChargeIndicator=false()]/cac:TaxCategory/cbc:TaxExemptionReasonCode,0..1
 2530,ibt-197,0..0,2,Document level allowance TAX exemption reason text,請求書レベルの返金の非課税理由コード,Text,3160,cbc:TaxExemptionReason,udt:TextType,/ubl:Invoice/cac:AllowanceCharge[cbc:ChargeIndicator=false()]/cac:TaxCategory/cbc:TaxExemptionReason,0..n
@@ -193,8 +193,8 @@
 2880,ibt-122,1..1,2,Supporting document reference,添付書類への参照,Document Reference,1370,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:AdditionalDocumentReference[not(cbc:DocumentTypeCode='130')]/cbc:ID,1..1
 2890,ibt-123,0..1,2,Supporting document description,添付書類の説明,Text,1380,cbc:DocumentDescription,udt:TextType,/ubl:Invoice/cac:AdditionalDocumentReference[not(cbc:DocumentTypeCode='130')]/cbc:DocumentDescription,0..n
 2900,ibt-125,0..1,2,Attached document,添付書類,Binary object,1400,cbc:EmbeddedDocumentBinaryObject,udt:BinaryObjectType,/ubl:Invoice/cac:AdditionalDocumentReference[not(cbc:DocumentTypeCode='130')]/cac:Attachment/cbc:EmbeddedDocumentBinaryObject,0..1
-2910,ibt-125-1,1..1,3,Attached document Mime code,添付書類MIMEコード,String,1410,@mimeCode,xsd:normalizedString,/ubl:Invoice/cac:AdditionalDocumentReference[not(cbc:DocumentTypeCode='130')]/cac:Attachment/cbc:EmbeddedDocumentBinaryObject/@mimeCode,1..1
-2920,ibt-125-2,1..1,3,Attached document Filename,添付書類ファイル名,String,1420,@filename,xsd:string,/ubl:Invoice/cac:AdditionalDocumentReference[not(cbc:DocumentTypeCode='130')]/cac:Attachment/cbc:EmbeddedDocumentBinaryObject/@filename,0..1
+2910,ibt-125-1,1..1,2,Attached document Mime code,添付書類MIMEコード,String,1410,@mimeCode,xsd:normalizedString,/ubl:Invoice/cac:AdditionalDocumentReference[not(cbc:DocumentTypeCode='130')]/cac:Attachment/cbc:EmbeddedDocumentBinaryObject/@mimeCode,1..1
+2920,ibt-125-2,1..1,2,Attached document Filename,添付書類ファイル名,String,1420,@filename,xsd:string,/ubl:Invoice/cac:AdditionalDocumentReference[not(cbc:DocumentTypeCode='130')]/cac:Attachment/cbc:EmbeddedDocumentBinaryObject/@filename,0..1
 2930,ibt-124,0..1,2,External document location,外部ドキュメントのロケーション,Text,1440,cbc:URI,udt:IdentifierType,/ubl:Invoice/cac:AdditionalDocumentReference[not(cbc:DocumentTypeCode='130')]/cac:Attachment/cac:ExternalReference/cbc:URI,0..1
 2940,ibg-25,1..n,1,INVOICE LINE,請求書明細行,,3760,cac:InvoiceLine,cac:InvoiceLineType,/ubl:Invoice/cac:InvoiceLine,1..n
 2950,ibt-126,1..1,2,Invoice line identifier,請求書明細行ID,Identifier,3770,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:InvoiceLine/cbc:ID,1..1
@@ -203,7 +203,7 @@
 2980,ibt-188,1..1,3,Invoice line document identifier,明細行文書ID,Identifier,3960,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:InvoiceLine/cac:DocumentReference[not(cbc:DocumentTypeCode='130')]/cbc:ID,1..1
 2990,ibt-189,0..1,3,Document type code,文書タイプコード,Code,3970,cbc:DocumentTypeCode,udt:CodeType,/ubl:Invoice/cac:InvoiceLine/cac:DocumentReference[not(cbc:DocumentTypeCode='130')]/cbc:DocumentTypeCode,0..1
 3000,ibt-128,0..1,2,Invoice line object identifier,請求書明細行オブジェクトID,Identifier,3990,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:InvoiceLine/cac:DocumentReference[cbc:DocumentTypeCode='130']/cbc:ID,1..1
-3010,ibt-128-1,0..1,3,Invoice line object identifier Scheme identifier,スキーマID,String,4000,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:InvoiceLine/cac:DocumentReference[cbc:DocumentTypeCode='130']/cbc:ID/@schemeID,0..1
+3010,ibt-128-1,0..1,2,Invoice line object identifier Scheme identifier,スキーマID,String,4000,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:InvoiceLine/cac:DocumentReference[cbc:DocumentTypeCode='130']/cbc:ID/@schemeID,0..1
 3020,ibt-129,1..1,2,Invoiced quantity,請求する数量,Quantity,3790,cbc:InvoicedQuantity,udt:QuantityType,/ubl:Invoice/cac:InvoiceLine/cbc:InvoicedQuantity,0..1
 3030,ibt-130,1..1,2,Invoiced quantity unit of measure code,請求する数量の数量単位コード,String,3800,@unitCode,xsd:normalizedString,/ubl:Invoice/cac:InvoiceLine/cbc:InvoicedQuantity/@unitCode,0..1
 3040,ibt-131,1..1,2,Invoice line net amount,値引後請求書明細行金額(税抜き),Amount,3810,cbc:LineExtensionAmount,udt:AmountType,/ubl:Invoice/cac:InvoiceLine/cbc:LineExtensionAmount,1..1
@@ -245,10 +245,10 @@
 3400,ibt-155,0..1,3,Item Seller's identifier,売り手による品目ID,Identifier,4250,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:SellersItemIdentification/cbc:ID,1..1
 3410,ibt-156,0..1,3,Item Buyer's identifier,買い手による品目ID,Identifier,4230,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:BuyersItemIdentification/cbc:ID,1..1
 3420,ibt-157,0..1,3,Item standard identifier,品目標準ID,Identifier,4270,cbc:ID,udt:IdentifierType,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:StandardItemIdentification/cbc:ID,1..1
-3430,ibt-157-1,1..1,4,Item standard identifier Scheme identifier,スキーマID,String,4280,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:StandardItemIdentification/cbc:ID/@schemeID,0..1
+3430,ibt-157-1,1..1,3,Item standard identifier Scheme identifier,スキーマID,String,4280,@schemeID,xsd:normalizedString,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:StandardItemIdentification/cbc:ID/@schemeID,0..1
 3440,ibt-158,0..n,3,Item classification identifier,品目分類ID,Identifier,4320,cbc:ItemClassificationCode,udt:CodeType,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:CommodityClassification/cbc:ItemClassificationCode,0..1
-3450,ibt-158-1,1..1,4,Item classification identifier Scheme identifier,スキーマID,String,4330,@listID,xsd:normalizedString,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:CommodityClassification/cbc:ItemClassificationCode/@listID,0..1
-3460,ibt-158-2,0..1,4,Item classification identifier Scheme version identifier,スキーマのバージョンID,String,4340,@listVersionID,xsd:normalizedString,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:CommodityClassification/cbc:ItemClassificationCode/@listVersionID,0..1
+3450,ibt-158-1,1..1,3,Item classification identifier Scheme identifier,スキーマID,String,4330,@listID,xsd:normalizedString,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:CommodityClassification/cbc:ItemClassificationCode/@listID,0..1
+3460,ibt-158-2,0..1,3,Item classification identifier Scheme version identifier,スキーマのバージョンID,String,4340,@listVersionID,xsd:normalizedString,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:CommodityClassification/cbc:ItemClassificationCode/@listVersionID,0..1
 3470,ibt-159,0..1,3,Item country of origin,品目の原産国,Code,4300,cbc:IdentificationCode,udt:CodeType,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:OriginCountry/cbc:IdentificationCode,0..1
 3480,ibg-32,0..n,3,ITEM ATTRIBUTES,品目属性,,4430,cac:AdditionalItemProperty,cac:ItemPropertyType,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:AdditionalItemProperty,0..n
 3490,ibt-160,1..1,4,Item attribute name,品目属性名,Text,4440,cbc:Name,udt:NameType,/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:AdditionalItemProperty/cbc:Name,1..1

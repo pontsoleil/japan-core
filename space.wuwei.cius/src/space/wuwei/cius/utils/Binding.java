@@ -11,6 +11,7 @@ public class Binding {
 	String xPath;
 	String occur;
 	boolean isUsed;
+	
 	public Binding(Integer a, String b, String c, String d, String e, String f, Integer g, String h, String i) {
 		semSort = a;
 		id = b;
@@ -23,6 +24,7 @@ public class Binding {
 		occur = i;
 		isUsed = false;
 	}
+	
 	// getter
 	public Integer getSemSort() { return semSort; }
 	public String  getID() { return id; }
@@ -34,6 +36,7 @@ public class Binding {
 	public String  getXPath() { return xPath; }
 	public String  getOccur() { return occur; }
 	public boolean isUsed() { return isUsed; }
+	
 	// setter
 	public Integer setSemSort(Integer x) { return semSort = x; }
 	public String  setID(String x) { return id = x; }
@@ -45,4 +48,5 @@ public class Binding {
 	public String  setXPath(String x) { return xPath = x; }
 	public String  setOccur(String x) { return occur = x; }
 	public boolean setUsed(boolean x) { return isUsed = x; }
+	
 }
