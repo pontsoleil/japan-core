@@ -26,20 +26,26 @@ public class Invoice2csv {
 	static TreeMap<Integer,String> dataMap = new TreeMap<>();
 
 	public static void main(String[] args) {
-		processInvoice("data/Downloads/JP PINT/pint-jp-resources-dev/trn-invoice/example/Japan PINT Invoice UBL Example.xml","data/csv/Japan PINT Invoice UBL Example.csv");
-		processInvoice("data/xml/Example1.xml", "data/csv/Example1.csv");
-//		 processInvoice("data/xml/Example2-TaxAcctCur.xml", "data/csv/Example2-TaxAcctCur.csv");
-//		 processInvoice("data/xml/Example3-SumInv1.xml", "data/csv/Example3-SumInv1.csv");
-//		 processInvoice("data/xml/Example4-SumInv2.xml", "data/csv/Example4-SumInv2.csv");
-//		 processInvoice("data/xml/Example5-AllowanceCharge.xml", "data/csv/Example5-AllowanceCharge.csv");
-//		 processInvoice("data/xml/Example6-CorrInv.xml", "data/csv/Example6-CorrInv.csv");
-//		 processInvoice("data/xml/Example7-Return.Quan.xml", "data/csv/Example7-Return.Quan.csv");
-//		 processInvoice("data/xml/Example8-Return.ItPr.xml", "data/csv/Example8-Return.ItPr.csv");
+		 processInvoice("data/xml/Example1.xml", "data/csv/Example1.csv");
+		 processInvoice("data/xml/Example2-TaxAcctCur.xml", "data/csv/Example2-TaxAcctCur.csv");
+		 processInvoice("data/xml/Example3-SumInv1.xml", "data/csv/Example3-SumInv1.csv");
+		 processInvoice("data/xml/Example4-SumInv2.xml", "data/csv/Example4-SumInv2.xsv");
+		 processInvoice("data/xml/Example5-AllowanceCharge.xml", "data/csv/Example5-AllowanceCharge.csv");
+		 processInvoice("data/xml/Example6-CorrInv.xml", "data/csv/Example6-CorrInv.csv");
+		 processInvoice("data/xml/Example7-Return.Quan.xml", "data/csv/Example7-Return.Quan.csv");
+		 processInvoice("data/xml/Example8-Return.ItPr.xml", "data/csv/Example8-Return.ItPr.csv");
 		 System.out.println("** END **");
 	}
 	
 	private static void processInvoice(String in_xml, String out_csv) {
-		FileHandler.parseBinding();
+		System.out.println("");
+		System.out.println("** processInvoice("+in_xml+", "+out_csv+")");
+	    boughMap = new TreeMap<Integer/* sort */,Integer/* seq */>();
+	    boughMapList = new ArrayList<TreeMap<Integer, Integer>>();
+	    rowMap = new TreeMap<Integer, String>();
+	    rowMapList = new TreeMap<String, TreeMap<Integer, String>>();
+
+	    FileHandler.parseBinding();
 		
 		FileHandler.doc = FileHandler.parseInvoice(in_xml);
 	    
@@ -71,6 +77,8 @@ public class Invoice2csv {
 	}
 	
 	private static void fillTable() {
+		FileHandler.tidyData = new ArrayList<ArrayList<String>>();
+
 		FileHandler.header.add("ibg-00");
 		for (Map.Entry<Integer,String> multipleEntry : FileHandler.multipleMap.entrySet()) {
 			String multipleID = multipleEntry.getValue();
@@ -83,7 +91,7 @@ public class Invoice2csv {
 				FileHandler.header.add(dataID);
 			}
 		}
-		System.out.println(FileHandler.header.toString());
+//		System.out.println(FileHandler.header.toString());
 		for (Map.Entry<String, TreeMap<Integer, String>> entryRow : rowMapList.entrySet()) {
 			ArrayList<String> record = new ArrayList<>();
 			for (int i = 0; i < FileHandler.header.size(); i++) {
@@ -91,20 +99,16 @@ public class Invoice2csv {
 			}
 			System.out.println(entryRow.toString());
 			// bough
-//			String rowMapListKey = entryRow.getKey();
 			String rowMapKey = entryRow.getKey();
-			String[] boughs = rowMapKey.split(",");
+			String[] boughs = rowMapKey.split(" ");
 			for (String bough : boughs) {
 				String[] index = bough.split("=");
-//				for (String index : indexes) {
-//				List<String> data = Arrays.asList(index.split("="));
 				Integer boughSort = Integer.parseInt(index[0]);
 				Binding boughBinding = FileHandler.semBindingMap.get(boughSort);
 				String boughID = boughBinding.getID();
 				String boughSeq = index[1];
 				int boughIndex = FileHandler.header.indexOf(boughID);
 				record.set(boughIndex, boughSeq);
-//				}
 			}
 			// data
 			TreeMap<Integer, String> rowMap = entryRow.getValue();
@@ -118,7 +122,7 @@ public class Invoice2csv {
 			}
 			FileHandler.tidyData.add(record);
 		}
-//		System.out.println(FileHandler.tidyData.toString());			
+		System.out.println(FileHandler.tidyData.toString());			
 	}
 
 	private static void fillData (
@@ -129,51 +133,40 @@ public class Invoice2csv {
         String id = binding.getID();
 		String businessTerm = binding.getBT();
 		binding.setUsed(true);
-		System.out.println("- fillData boughMap=" + boughMap.toString() + sort + ":" + id + " " + businessTerm + " " + value);
+		System.out.println("- fillData boughMap=" + boughMap.toString() + sort + "(" + id + ")" + businessTerm + " " + value);
 
 		String rowMapKey = "";
-//		String rowMapListKey = "";
-//		for (int i = 0; i < boughMapList.size(); i++) {
-//			TreeMap<Integer, Integer> boughMap = boughMapList.get(i);
-		rowMapKey = "";
 		for (Map.Entry<Integer, Integer> entry : boughMap.entrySet()) {
 			Integer boughSort = entry.getKey();
 			Integer seq = entry.getValue();
 			rowMapKey += (boughSort + "=" + seq + " ");
 		}
 		rowMapKey = rowMapKey.trim();
-//			if (rowMapListKey.indexOf(rowMapKey) < 0) {
-//				rowMapListKey += (rowMapKey + ",");
-//			}
-//		}
-//		rowMapListKey = rowMapListKey.substring(0, rowMapListKey.length() - 1);
-//		System.out.println("|"+rowMapListKey+"|");
-//		TreeMap<Integer, String> rowMap = new TreeMap<>();
 		if (rowMapList.containsKey(rowMapKey)) {
 			rowMap = rowMapList.get(rowMapKey);
 		}
 		rowMap.put(sort, value);
-		
 		rowMapList.put(rowMapKey, rowMap);
-//		rowMapList.put(rowMapListKey, rowMap);
 	}
 	
 	private static void fillGroup (
 			Node parent, 
 			Integer sort, 
-			TreeMap<Integer, Integer> boughMap ) {	
+			TreeMap<Integer, Integer> boughMap ) {
+		
+		rowMap = new TreeMap<Integer, String>();
+		
 		// get child Nodes
 		Binding binding = FileHandler.semBindingMap.get(sort);
 		String id = binding.getID();
 		String businessTerm = binding.getBT();
-//		String xPath = binding.getXPath();
 
 		TreeMap<Integer, NodeList> childList = FileHandler.getChildren(parent, id);
 		
 		if (childList.size() > 0) {
-			System.out.println("- fillGroup boughMap=" + boughMap.toString() + sort + ":" + id + " " + businessTerm );
+			System.out.println("- fillGroup boughMap=" + boughMap.toString() + sort + "(" + id + ")" + businessTerm );
 		} else {
-			System.out.println("- fillGroup boughMap=" + boughMap.toString() + sort + ":" + id + " " + businessTerm + " is Empty" );
+			System.out.println("- fillGroup boughMap=" + boughMap.toString() + sort + "(" + id + ")" + businessTerm + " is Empty" );
 			return;
 		}
    	
@@ -182,8 +175,7 @@ public class Invoice2csv {
             String childID = childBinding.getID();
     		String childBusinessTerm = childBinding.getBT();
     		int childLevel = Integer.parseInt(childBinding.getLevel());
-        	@SuppressWarnings("unchecked")
-			TreeMap<Integer,Integer> boughMap1 = (TreeMap<Integer, Integer>) boughMap.clone();
+    		
            
             NodeList nodes = childList.get(childSort);
             
@@ -210,28 +202,29 @@ public class Invoice2csv {
 		            		}
 		            	}
 		            } else {
+			        	@SuppressWarnings("unchecked")
+						TreeMap<Integer,Integer> boughMap1 = (TreeMap<Integer, Integer>) boughMap.clone();
+	                	System.out.println("* fillGroup boughMapList="+boughMapList.toString()+" boughMap1" + boughMap1.toString() + " boughMap1.size=" + boughMap1.size() + " child(" + childSort + ") level=" + childLevel + " " +  businessTerm + "->" + childBusinessTerm);
 		            	boolean is_multiple = isMultiple(childSort);
 		                if (is_multiple && countNodes > 1) {
-//		                	TreeMap<Integer,Integer> boughMap = boughMapList.get(boughMapList.size() - 1);
-		                	Integer lastkey = boughMap.lastKey();
-		                	Integer lastvalue = boughMap.get(lastkey);
+		                	Integer lastkey = boughMap1.lastKey();
+		                	Integer lastvalue = boughMap1.get(lastkey);
+		                	System.out.print("    boughMap1 lastKey=" + lastkey + " child is multiple level=" + childLevel);
 			            	if (childSort != lastkey) {
 			            		if (boughMap.size() < childLevel + 1) {
 			                		boughMap1.put(childSort, i);
-			                		boughMapList.add(boughMap1);
 			            		} else {
 			            			boughMap1.pollLastEntry();
 			            			boughMap1.put(childSort, i);
 			            			boughMapList.remove(boughMapList.size() - 1);
-			            			boughMapList.add(boughMap1);
 			            		}
 			            	} else if (countNodes > 1) {
-			            		lastvalue +=1;
-			            		boughMap1.put(lastkey, lastvalue);
+			            		Integer lastvalue1 = lastvalue + 1;
+			            		boughMap1.put(lastkey, lastvalue1);
 			            	}
+			            	boughMapList.add(boughMap1);
+			            	System.out.println(" UPDATED boughMapList=" + boughMapList.toString() + " boughMap1=" + boughMap1.toString());
 		                }
-	                	System.out.println("* fillGroup "+ childLevel + " boughMap1=" + boughMap1.toString() /*+ sort +":" + id + " "*/ + businessTerm + "->" /*+ childSort + ":" + childID + " "*/ + childBusinessTerm );
-
 	                	fillGroup(node, childSort, boughMap1);
 		            }
 	            }

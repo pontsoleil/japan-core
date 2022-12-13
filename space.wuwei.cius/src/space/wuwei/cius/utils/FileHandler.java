@@ -92,7 +92,7 @@ public class FileHandler {
 			for (int i = 0; i < nodes.getLength(); i++) {
 				String value = "";
 				Node node = nodes.item(i);
-				System.out.println(i+" "+node.getNodeName()+" "+node.getTextContent());
+//				System.out.println(i+" "+node.getNodeName()+" "+node.getTextContent());
 				if (node.hasAttributes()) {
 					NamedNodeMap attributes = node.getAttributes();
 					int attrLength = attributes.getLength();
@@ -101,7 +101,7 @@ public class FileHandler {
 				        String name = attribute.getNodeName();
 				        if ("currencyID".equals(name)) {
 				           value = attribute.getNodeValue();
-				           System.out.println(" "+value);
+//				           System.out.println(" "+value);
 				        }
 					} 
 				}
@@ -115,7 +115,7 @@ public class FileHandler {
 		NodeList nodes = parsedNode.nodes;
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Node node = nodes.item(i);
-			System.out.println(i+" "+node.getNodeName()+" "+node.getTextContent());
+//			System.out.println(i+" "+node.getNodeName()+" "+node.getTextContent());
 		}
 		
 		// ibt-160 Item attribute name
@@ -221,7 +221,7 @@ public class FileHandler {
 		    Integer synSort = binding.getSynSort();
 		    String l = binding.getLevel();
 		    
-		    System.out.println(id+" "+l+" "+BusinessTerm);
+//		    System.out.println(id+" "+l+" "+BusinessTerm);
 		    
 		    int level = 0;
 		    if (l.matches("^[0-9]+$")) {
@@ -330,7 +330,7 @@ public class FileHandler {
 			Node node = nodes.item(i);
 			String value = node.getTextContent();
 			nodeValueMap.put(i, value);
-			System.out.println(i+" "+node.getNodeName()+" "+value);
+//			System.out.println(i+" "+node.getNodeName()+" "+value);
 		}
 		return nodeValueMap;
 	}
@@ -372,7 +372,7 @@ public class FileHandler {
 			String qname, 
 			String value, 
 			HashMap<String, String> attrMap ) {
-		System.out.println("- FileHaldler.appendElementNS "+prefix+":"+qname);
+//		System.out.println("- FileHaldler.appendElementNS "+prefix+":"+qname);
 		try {
 			if ("@".equals(qname.substring(0,1))) {
 				String attrName = qname.substring(1, qname.length());
