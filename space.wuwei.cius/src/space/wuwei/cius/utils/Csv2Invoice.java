@@ -12,7 +12,6 @@ import javax.xml.transform.TransformerException;
 
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
-//import org.w3c.dom.Attr;
 
 public class Csv2Invoice {
 	static String OUT_XML = "data/xml/Example1out.xml";
@@ -42,11 +41,15 @@ public class Csv2Invoice {
  	static ArrayList<LevelElement> levelElementList = new ArrayList<>();
    
 	public static void main(String[] args) {
+		processCSV("data/csv/Example1.csv", "data/xml/Example1_out.xml");
+	}
+	
+	public static void processCSV(String in_csv, String out_xml) {
 		String DocumentCurrencyCode = null;
 		String TaxCurrencyCode = null;
 		
 		FileHandler.parseBinding();
-		FileHandler.csvFileRead(IN_CSV, CHARSET);
+		FileHandler.csvFileRead(in_csv, CHARSET);
 		FileHandler.parseSkeleton();
 					
 		rowMapList = new TreeMap<>();
@@ -140,7 +143,7 @@ public class Csv2Invoice {
 		}
 		System.out.println("Csv2Invoice.main\n" + levelElementList.toString());
 
-		try (FileOutputStream output = new FileOutputStream(OUT_XML)) {
+		try (FileOutputStream output = new FileOutputStream(out_xml)) {
 			WriteXmlDom.writeXml(FileHandler.doc, output);
 		} catch (IOException eIO) {
 		    eIO.printStackTrace();
