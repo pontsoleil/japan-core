@@ -26,10 +26,11 @@ public class Invoice2csv {
 	static TreeMap<Integer,String> dataMap = new TreeMap<>();
 
 	public static void main(String[] args) {
-		 processInvoice("data/xml/Example1.xml", "data/csv/Example1.csv");
+		processInvoice("data/Downloads/JP PINT/pint-jp-resources-dev/trn-invoice/example/Japan PINT Invoice UBL Example.xml","data/csv/Japan PINT Invoice UBL Example.csv");
+		processInvoice("data/xml/Example1.xml", "data/csv/Example1.csv");
 //		 processInvoice("data/xml/Example2-TaxAcctCur.xml", "data/csv/Example2-TaxAcctCur.csv");
 //		 processInvoice("data/xml/Example3-SumInv1.xml", "data/csv/Example3-SumInv1.csv");
-//		 processInvoice("data/xml/Example4-SumInv2.xml", "data/csv/Example4-SumInv2.xsv");
+//		 processInvoice("data/xml/Example4-SumInv2.xml", "data/csv/Example4-SumInv2.csv");
 //		 processInvoice("data/xml/Example5-AllowanceCharge.xml", "data/csv/Example5-AllowanceCharge.csv");
 //		 processInvoice("data/xml/Example6-CorrInv.xml", "data/csv/Example6-CorrInv.csv");
 //		 processInvoice("data/xml/Example7-Return.Quan.xml", "data/csv/Example7-Return.Quan.csv");
