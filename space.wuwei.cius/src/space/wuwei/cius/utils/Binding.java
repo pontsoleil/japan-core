@@ -1,5 +1,7 @@
 package space.wuwei.cius.utils;
 
+import java.util.ArrayList;
+
 public class Binding {
 	Integer semSort;
 	String id;
@@ -9,6 +11,7 @@ public class Binding {
 	String datatype;
 	Integer synSort;
 	String xPath;
+	ArrayList<String> extraXPath;
 	String occur;
 	boolean isUsed;
 	
@@ -34,6 +37,7 @@ public class Binding {
 	public String  getDatatype() { return datatype; }
 	public Integer getSynSort() { return synSort; }
 	public String  getXPath() { return xPath; }
+	public ArrayList<String> getExtraXPath() { return extraXPath; }
 	public String  getOccur() { return occur; }
 	public boolean isUsed() { return isUsed; }
 	
@@ -46,6 +50,10 @@ public class Binding {
 	public String  setDatatype(String x) { return datatype = x; }
 	public Integer setSynSort(Integer x) { return synSort = x; }
 	public String  setXPath(String x) { return xPath = x; }
+	public ArrayList<String> addExtraXPath(String x) {
+		extraXPath.add(x);
+		return extraXPath;
+	}
 	public String  setOccur(String x) { return occur = x; }
 	public boolean setUsed(boolean x) { return isUsed = x; }
 	

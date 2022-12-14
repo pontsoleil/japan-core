@@ -14,6 +14,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 //import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -65,9 +66,15 @@ public class FileHandler {
 		Integer/* parent semSort */, 
 		ArrayList<Integer/* child semSort */>> childMap = new TreeMap<>();
 	public static TreeMap<
+		Integer/* parent semSort */, 
+		ArrayList<Integer/* child semSort */>> synChildMap = new TreeMap<>();
+	public static TreeMap<
 		Integer/* child semSort */, 
 		Integer/* parent semSort */> parentMap = new TreeMap<>();
-    public static TreeMap<
+	public static TreeMap<
+		Integer/* child semSort */, 
+		Integer/* parent semSort */> synParentMap = new TreeMap<>();
+	public static TreeMap<
     	Integer/* semSort */, 
     	String/* id */> multipleMap = new TreeMap<>();
 
@@ -168,95 +175,140 @@ public class FileHandler {
 	public static void parseBinding() {
 		try (BufferedReader fileReader = new BufferedReader(new FileReader(JP_PINT_CSV)))
 		{
-		  String line = "";
-		  line = fileReader.readLine();
-		  String[] headers = line.split(",");
-		  Integer[] parents = new Integer[10];
-		  //Read the file line by line
-		  while ((line = fileReader.readLine()) != null) {
-		    String[] tokens = line.split(",");
-		    Binding binding = new Binding(0, "", "", "", "", "", 0, "", "");
-		    for (int i = 0; i < headers.length; i++) {
-		    	String key = headers[i].replace("\uFEFF", "");
-		    	String value = tokens[i];
-		    	Integer order = -1;
-		    	switch (key) {
-		    	case "semSort":
-		    		if (value.matches("^[0-9]+$")) {
-		    			order = Integer.parseInt(value);
-		    		}
-		    		binding.setSemSort(order);
-		    		break;
-		    	case "id":
-		    		binding.setID(value);
-		    		break;
-		    	case "level":
-		    		binding.setLevel(value);
-		    		break;
-		    	case "businessTerm":
-		    		binding.setBT(value);
-		    		break;
-		    	case "card":
-		    		binding.setCard(value);
-		    		break;
-		    	case "dataType":
-		    		binding.setDatatype(value);
-		    		break;
-		    	case "synSort":
-		    		if (value.matches("^[0-9]+$")) {
-		    			order = Integer.parseInt(value);
-		    		}
-		    		binding.setSynSort(order);
-		    		break;
-		    	case "xPath":
-		    		binding.setXPath(value);
-		    		break;
-		    	case "occur":
-		    		binding.setOccur(value);
-		    	}
-		    }
-		    String id = binding.getID();
-		    String BusinessTerm = binding.getBT();
-		    Integer semSort = binding.getSemSort();
-		    Integer synSort = binding.getSynSort();
-		    String l = binding.getLevel();
-		    
-//		    System.out.println(id+" "+l+" "+BusinessTerm);
-		    
-		    int level = 0;
-		    if (l.matches("^[0-9]+$")) {
-		    	level = Integer.parseInt(l);
-			    parents[level] = semSort;
+			String line = "";
+			line = fileReader.readLine();
+			String[] headers = line.split(",");
+			Integer[] parents = new Integer[10];
+			//Read the file line by line
+			System.out.println(headers.toString());
+			while ((line = fileReader.readLine()) != null) {
+				String[] tokens = line.split(",");		
+				// ﻿s﻿semSort,id,card,level,businessTerm,desc,dataType,businessTerm_ja,desc_ja,synSort,element,synDatatype,xPath,occur
+				Binding binding = new Binding(0, "", "", "", "", "", 0, "", "");
+				for (int i = 0; i < headers.length; i++) {
+					String key = headers[i];
+					if (0==i) {
+						key	= key.replace("\uFEFF", "");
+					}
+					String value = tokens[i];
+					Integer order = -1;
+					switch (key) {
+					case "semSort":
+//						if (value.matches("^[0-9]+$")) {
+						order = Integer.parseInt(value);
+//						}
+						binding.setSemSort(order);
+						break;
+					case "id":
+						binding.setID(value);
+						break;
+					case "card":
+						binding.setCard(value);
+						break;
+					case "level":
+						binding.setLevel(value);
+						break;
+					case "businessTerm":
+						binding.setBT(value);
+						break;
+					case "dataType":
+						binding.setDatatype(value);
+						break;
+					case "synSort":
+						if (value.matches("^[0-9]+$")) {
+							order = Integer.parseInt(value);
+						}
+						binding.setSynSort(order);
+						break;
+					case "xPath":
+						binding.setXPath(value);
+						break;
+					case "occur":
+						binding.setOccur(value);
+					}
+				}
+				String id = binding.getID();
+				Integer semSort = binding.getSemSort();
+				Integer synSort = binding.getSynSort();
 			    
-		    	bindingDict.put(id, binding);
-		    	semBindingMap.put(semSort, binding);
-		    	synBindingMap.put(synSort, binding);
-		    	
-		    	// fill semantic childMap
-			    if (level > 0) {
-			    	int parent_level = level - 1;
-				    Integer parent_semSort = parents[parent_level];
-				    ArrayList<Integer> children = null;
-				    if (childMap.containsKey(parent_semSort)) {
-				    	children = childMap.get(parent_semSort);
-				    } else {
-				    	children = new ArrayList<Integer>();
-				    }
-				    children.add(semSort);
-				    childMap.put(parent_semSort,children);
-				    for (Integer child_semSort: children) {
-				    	parentMap.put(child_semSort,parent_semSort);
-				    }
-			    }
-			  }
-		  }
+				bindingDict.put(id, binding);
+				semBindingMap.put(semSort, binding);
+				synBindingMap.put(synSort, binding);
+			}
+			  
+			for (Entry<Integer, Binding> entry : synBindingMap.entrySet()) {
+				Integer synSort = entry.getKey();
+				Binding binding = entry.getValue();
+				Integer semSort = binding.getSemSort();
+				String xPath = binding.getXPath();
+				xPath = stripSelector(xPath);
+				int level = countChar('/',xPath);
+				if (level > 0) {
+					level -= 1;
+					parents[level] = semSort;				  
+					// fill syntax childMap
+					if (level > 0) {
+						int parent_level = level - 1;
+						Integer parent_semSort = parents[parent_level];
+						Binding parentBinding = semBindingMap.get(parent_semSort);
+						String parentXPath = parentBinding.getXPath();
+//						if (xPath.indexOf(parentXPath) >= 0) {
+//							int idx = xPath.lastIndexOf("/");
+//							String extraXPath = xPath.substring(0, idx);
+//							if (! parentXPath.equals(extraXPath)) {
+//								System.out.println(parentXPath+" "+extraXPath);
+//							}
+//						}
+						ArrayList<Integer> children = null;
+						if (synChildMap.containsKey(parent_semSort)) {
+							children = synChildMap.get(parent_semSort);
+						} else {
+						  children = new ArrayList<Integer>();
+						}
+						children.add(semSort);
+						synChildMap.put(parent_semSort,children);
+					}
+				}
+			}
+	
+			for (Entry<Integer, Binding> entry : semBindingMap.entrySet()) {
+				Integer semSort = entry.getKey();
+				Binding binding = entry.getValue();
+				String l =binding.getLevel();
+				Integer level = Integer.parseInt(l);
+				// fill semantic childMap
+				if (level > 0) {
+					int parent_level = level - 1;
+					Integer parent_semSort = parents[parent_level];
+					ArrayList<Integer> children = null;
+					if (childMap.containsKey(parent_semSort)) {
+						children = childMap.get(parent_semSort);
+					} else {
+						children = new ArrayList<Integer>();
+					}
+					children.add(semSort);
+					childMap.put(parent_semSort,children);
+					for (Integer child_semSort: children) {
+						parentMap.put(child_semSort,parent_semSort);
+					}
+				}
+			}
 		}
 		catch (IOException e) {
 		  e.printStackTrace();
 		}
 	}
 	
-
+	private static int countChar(char ch, String str) {
+		int count = 0;
+		for (int i = 0; i < str.length(); i++) {
+		    if (str.charAt(i) == ch) {
+		        count++;
+		    }
+		}
+		return count;
+	}
+	
 	public static Document parseInvoice(String xmlfile) {
 		try {
 		    //Build DOM
@@ -407,20 +459,13 @@ public class FileHandler {
 	
 	public static TreeMap<Integer, NodeList> getChildren(Node e, String id) {
 		TreeMap<Integer, NodeList> childList = new TreeMap<>();	
-		Integer semSort = ((Binding) bindingDict.get(id)).getSemSort();
 		Binding binding = (Binding) bindingDict.get(id);
+		Integer semSort = binding.getSemSort();
+		Integer synSort = binding.getSynSort();
 		String xpath = binding.getXPath();
-//		String parent_xpath;
-//		if (semSort > 1000) {
-//			Integer parent_semSort = parentMap.get(semSort);
-//			Binding parent_binding = semBindingMap.get(parent_semSort);
-//			parent_xpath = parent_binding.getXPath();
-//			if (! parent_xpath.equals("/Invoice") && ! parent_xpath.equals("/ubl:Invoice")) {
-//				xpath = xpath.replace(parent_xpath, ".");
-//			}
-//		}
 		
-		ArrayList<Integer> children = childMap.get(semSort);
+//		ArrayList<Integer> children = childMap.get(semSort);
+		ArrayList<Integer> children = childMap.get(synSort);
 		for (Integer sort: children) {
 			Binding child_binding = (Binding) semBindingMap.get(sort);
 			String childID =  child_binding.getID();
@@ -460,6 +505,27 @@ public class FileHandler {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public static String extractSelector(
+			String xPath ) {
+		int start = xPath.indexOf("[");
+		int last = xPath.lastIndexOf("]");
+		String selector = "";
+		if (start >= 0) {
+			selector = xPath.substring(start, last+1);
+		}
+		return selector;
+	}
+	
+	public static String stripSelector (
+			String path ) {
+		int start = path.indexOf("[");
+		int last = path.lastIndexOf("]");
+		if (start >= 0) {
+			path = path.substring(0, start) + path.substring(last+1,path.length());	
+		}
+		return path;
 	}
 
 	public static void writeXML(Document doc, String filename)  {

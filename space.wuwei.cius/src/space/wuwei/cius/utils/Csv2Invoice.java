@@ -217,11 +217,11 @@ public class Csv2Invoice {
 			Integer boughSeq,
 			String value,
 			HashMap<String,String> attributes ) {
-		String selector = extractSelector(path);
+		String selector = FileHandler.extractSelector(path);
 		if (selector!="") {
 			System.out.println(selector);
 		}
-		path = stripSelector(path);
+		path = FileHandler.stripSelector(path);
 		NodeList elements = FileHandler.getXPath(parent, path);
 		Element element = null;
 		if (0 == elements.getLength()) {
@@ -254,7 +254,7 @@ public class Csv2Invoice {
 		String cacValue = "";
 		HashMap<String,String> cacAttributes = null;
 				
-		String path1 = stripSelector(path);
+		String path1 = FileHandler.stripSelector(path);
 		String ns = null, nsURI = null, qname = null;
 		if ("@".equals(path1.substring(0,1))) {
 			qname = path1;
@@ -284,26 +284,26 @@ public class Csv2Invoice {
 		}
 	}
 	
-	private static String extractSelector(
-			String xPath ) {
-		int start = xPath.indexOf("[");
-		int last = xPath.lastIndexOf("]");
-		String selector = "";
-		if (start >= 0) {
-			selector = xPath.substring(start, last+1);
-		}
-		return selector;
-	}
-	
-	private static String stripSelector (
-			String path ) {
-		int start = path.indexOf("[");
-		int last = path.lastIndexOf("]");
-		if (start >= 0) {
-			path = path.substring(0, start) + path.substring(last+1,path.length());	
-		}
-		return path;
-	}
+//	private static String extractSelector(
+//			String xPath ) {
+//		int start = xPath.indexOf("[");
+//		int last = xPath.lastIndexOf("]");
+//		String selector = "";
+//		if (start >= 0) {
+//			selector = xPath.substring(start, last+1);
+//		}
+//		return selector;
+//	}
+//	
+//	private static String stripSelector (
+//			String path ) {
+//		int start = path.indexOf("[");
+//		int last = path.lastIndexOf("]");
+//		if (start >= 0) {
+//			path = path.substring(0, start) + path.substring(last+1,path.length());	
+//		}
+//		return path;
+//	}
 
 	private static ArrayList<String> splitPath (
 			String xPath ) {
