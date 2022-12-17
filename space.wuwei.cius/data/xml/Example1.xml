@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ubl:Invoice 
-	xmlns:ubl="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" 
+<Invoice 
+	xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" 
 	xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" 
 	xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" 
 	xmlns:ccts="urn:un:unece:uncefact:documentation:2" 
@@ -163,4 +163,4 @@ Japan common commercial invoice, example1-minimum
 			<cbc:BaseQuantity unitCode="H87">1</cbc:BaseQuantity> <!--IBT-149 - Item price base quantity, IBT-150 - Item price base quantity unit of measure code -->
 		</cac:Price>
 	</cac:InvoiceLine>
-</ubl:Invoice>
+</Invoice>

@@ -1,12 +1,14 @@
 package space.wuwei.cius.utils;
 
-import org.w3c.dom.NodeList;
+import java.util.List;
+
+import org.w3c.dom.Node;
 
 public class ParsedNode {
 	public Binding binding;
-	public NodeList nodes;
+	public List<Node> nodes;
 	
-	ParsedNode(Binding a, NodeList b) {
+	ParsedNode(Binding a, List<Node> b) {
 		binding = a;
 		nodes = b;
 	}

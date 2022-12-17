@@ -2,7 +2,8 @@ package space.wuwei.cius.utils;
 
 import java.util.ArrayList;
 // import java.util.Arrays;
-import java.util.Iterator;
+//import java.util.Iterator;
+import java.util.List;
 // import java.util.List;
 import java.util.Map;
 //import java.util.Map.Entry;
@@ -11,7 +12,7 @@ import java.util.TreeMap;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+//import org.w3c.dom.NodeList;
 
 public class Invoice2csv {
 	static String IN_XML = "data/xml/Example1.xml";
@@ -26,11 +27,11 @@ public class Invoice2csv {
 	static TreeMap<Integer,String> dataMap = new TreeMap<>();
 
 	public static void main(String[] args) {
-//		 processInvoice("data/xml/Example1.xml", "data/csv/Example1.csv");
+		 processInvoice("data/xml/Example1.xml", "data/csv/Example1.csv");
 //		 processInvoice("data/xml/Example2-TaxAcctCur.xml", "data/csv/Example2-TaxAcctCur.csv");
 //		 processInvoice("data/xml/Example3-SumInv1.xml", "data/csv/Example3-SumInv1.csv");
 //		 processInvoice("data/xml/Example4-SumInv2.xml", "data/csv/Example4-SumInv2.xsv");
-		 processInvoice("data/xml/Example5-AllowanceCharge.xml", "data/csv/Example5-AllowanceCharge.csv");
+//		 processInvoice("data/xml/Example5-AllowanceCharge.xml", "data/csv/Example5-AllowanceCharge.csv");
 //		 processInvoice("data/xml/Example6-CorrInv.xml", "data/csv/Example6-CorrInv.csv");
 //		 processInvoice("data/xml/Example7-Return.Quan.xml", "data/csv/Example7-Return.Quan.csv");
 //		 processInvoice("data/xml/Example8-Return.ItPr.xml", "data/csv/Example8-Return.ItPr.csv");
@@ -55,8 +56,8 @@ public class Invoice2csv {
 			String id = binding.getID();
 			String card = binding.getCard();
 			if (card.matches("^...n$")) {
-				NodeList nodelist = FileHandler.getElements((Element) FileHandler.root, id);
-				if (nodelist.getLength() > 1) {
+				List<Node> nodelist = FileHandler.getElements((Element) FileHandler.root, id);
+				if (nodelist.size() > 1) {
 					FileHandler.multipleMap.put(sort, id);
 				}
 			}
@@ -161,7 +162,7 @@ public class Invoice2csv {
 		String id = binding.getID();
 		String businessTerm = binding.getBT();
 
-		TreeMap<Integer, NodeList> childList = FileHandler.getChildren(parent, id);
+		TreeMap<Integer, List<Node>> childList = FileHandler.getChildren(parent, id);
 		
 		if (childList.size() > 0) {
 			System.out.println("- fillGroup boughMap=" + boughMap.toString() + sort + "(" + id + ")" + businessTerm );
@@ -175,14 +176,13 @@ public class Invoice2csv {
             String childID = childBinding.getID();
     		String childBusinessTerm = childBinding.getBT();
     		int childLevel = Integer.parseInt(childBinding.getLevel());
-    		
            
-            NodeList nodes = childList.get(childSort);
+            List<Node> nodes = childList.get(childSort);
             
-            Integer countNodes = nodes.getLength();             
+            Integer countNodes = nodes.size();             
             if (countNodes > 0) {
 	            for (int i = 0; i < countNodes; i++) {
-	            	Node node = nodes.item(i);
+	            	Node node = nodes.get(i);
 		        	if (childID.matches("^ibt-[0-9]+.*$")) {
 	        			String value = node.getTextContent();
 		            	if (!(null==value || value.equals(""))) {
@@ -233,20 +233,27 @@ public class Invoice2csv {
 	}
 
 	private static boolean isMultiple(Integer sort) {
-		// Get the iterator over the HashMap
-		Iterator<Map.Entry<Integer, String>> iterator = FileHandler.multipleMap.entrySet().iterator();
-		// flag to store result
-		boolean isKeyPresent = false;
-		// Iterate over the HashMap
-		while (iterator.hasNext()) {
-		    // Get the entry at this iteration
-		    Map.Entry<Integer, String> entry = iterator.next();
-		    // Check if this key of HashMap is the required key
-		    if (sort == entry.getKey()) {
-		        isKeyPresent = true;
-		    }
+		boolean multiple = false;
+		Binding binding = FileHandler.semBindingMap.get(sort);
+		String card = binding.getCard();
+		if (card.matches(".*n$")) {
+			multiple = true;
 		}
-		return isKeyPresent;
+		return multiple;
+//		// Get the iterator over the HashMap
+//		Iterator<Map.Entry<Integer, String>> iterator = FileHandler.multipleMap.entrySet().iterator();
+//		// flag to store result
+//		boolean isKeyPresent = false;
+//		// Iterate over the HashMap
+//		while (iterator.hasNext()) {
+//		    // Get the entry at this iteration
+//		    Map.Entry<Integer, String> entry = iterator.next();
+//		    // Check if this key of HashMap is the required key
+//		    if (sort == entry.getKey()) {
+//		        isKeyPresent = true;
+//		    }
+//		}
+//		return isKeyPresent;
 	}
 
 }
