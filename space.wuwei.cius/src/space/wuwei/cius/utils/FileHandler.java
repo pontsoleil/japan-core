@@ -89,11 +89,24 @@ public class FileHandler {
 		doc = parseInvoice(IN_XML);
 		parseDoc();
 		
+		List<Node> nodes;
+		ParsedNode parsedNode;
+		
+	    // ibt-0373 - INVOICING PERIOD Start date 
+		Binding ibt73Binding = bindingDict.get("ibt-073");
+		Integer ibt73Sort = ibt73Binding.getSemSort();
+		parsedNode = nodeMap.get(ibt73Sort);
+		nodes = parsedNode.nodes;
+		for (int i = 0; i < nodes.size(); i++) {
+			Node node = nodes.get(i);
+			System.out.println(i+" "+node.getNodeName()+" "+node.getTextContent());
+		}
+		
 		// ibt-024 Specification identifier
 		Binding ibt24Binding = bindingDict.get("ibt-024");
 		Integer ibt24Sort = ibt24Binding.getSemSort();
-		ParsedNode parsedNode = nodeMap.get(ibt24Sort);
-		List<Node> nodes = parsedNode.nodes;
+		parsedNode = nodeMap.get(ibt24Sort);
+		nodes = parsedNode.nodes;
 		for (int i = 0; i < nodes.size(); i++) {
 			Node node = nodes.get(i);
 			System.out.println("ibt-024 Specification identifier "+i+" "+node.getNodeName()+" "+node.getTextContent());
@@ -246,6 +259,7 @@ public class FileHandler {
 				String id = binding.getID();
 				Integer semSort = binding.getSemSort();
 				Integer synSort = binding.getSynSort();
+//				System.out.println("- FileHandler.parseBinding "+binding.getID()+" "+binding.getXPath());
 				bindingDict.put(id, binding);
 				semBindingMap.put(semSort, binding);
 				synBindingMap.put(synSort, binding);
@@ -254,7 +268,7 @@ public class FileHandler {
 			for (Entry<Integer, Binding> entry : semBindingMap.entrySet()) {
 				Integer semSort = entry.getKey();
 				Binding binding = entry.getValue();
-//				String id = binding.getID();
+				String id = binding.getID();
 				String l = binding.getLevel();
 				Integer level = Integer.parseInt(l);
 				parents[level] = semSort;
@@ -263,7 +277,7 @@ public class FileHandler {
 					Integer parent_semSort = parents[parent_level];
 					Binding parent_binding = semBindingMap.get(parent_semSort);
 					String parentID = parent_binding.getID();
-					System.out.println("- FileHandler.parseBinding " + parentID + "->" + id);
+//					System.out.println("- FileHandler.parseBinding " + parentID + "->" + id);
 					ArrayList<Integer> children = null;
 					if (childMap.containsKey(parent_semSort)) {
 						children = childMap.get(parent_semSort);
@@ -285,6 +299,7 @@ public class FileHandler {
 				String strippedXPath = stripSelector(xPath);
 				int idx = strippedXPath.lastIndexOf("/");
 				String additionalXpath = "";
+				String additionalXpath1 = "";
 				if (idx >= 0) {
 					additionalXpath = strippedXPath.substring(0, idx);
 				}
@@ -297,13 +312,21 @@ public class FileHandler {
 					String parentID = parentBinding.getID();
 					String parentXPath = parentBinding.getXPath();
 					String strippedParentXPath = stripSelector(parentXPath);
+//					System.out.println("- FileHandler.parseBinding check additional XPath " + parentID + "->" + id);
 					if (additionalXpath.length() > 0 &&
 							strippedParentXPath.indexOf(additionalXpath) < 0 &&
 							additionalXpath.indexOf(strippedParentXPath) < 0) {
 						additionalXpath = resumeSelector(additionalXpath, xPath);
+						System.out.println(id+" "+xPath+" "+parentID+" "+parentXPath+"\n    ADDED parent XPath: "+parentXPath+" additional Xpath: "+additionalXpath);
+						
 						parentBinding.addAdditionalXPath(additionalXpath);
-						System.out.println(id+" "+xPath+" "+parentID+" "+parentXPath);
-						System.out.println("    ADDED parent XPath: "+parentXPath+" additional Xpath: "+additionalXpath);
+					} else if (idx > 0 && xPath.length() > 0 &&
+							strippedParentXPath.indexOf(xPath) < 0 &&
+							xPath.indexOf(strippedParentXPath) < 0) {
+						additionalXpath = xPath;
+						System.out.println(id+" "+xPath+" "+parentID+" "+parentXPath+"\n    ADDED parent XPath: "+parentXPath+" additional Xpath: "+additionalXpath);
+						
+						parentBinding.addAdditionalXPath(additionalXpath);
 					}
 				}
 			}
