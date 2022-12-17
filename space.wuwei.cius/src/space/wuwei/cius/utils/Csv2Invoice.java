@@ -5,13 +5,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import javax.xml.transform.TransformerException;
 
-import org.w3c.dom.NodeList;
+//import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 public class Csv2Invoice {
 	static String OUT_XML = "data/xml/Example1out.xml";
@@ -222,19 +224,19 @@ public class Csv2Invoice {
 			System.out.println(selector);
 		}
 		path = FileHandler.stripSelector(path);
-		NodeList elements = FileHandler.getXPath(parent, path);
+		List<Node> elements = FileHandler.getXPath(parent, path);
 		Element element = null;
-		if (0 == elements.getLength()) {
+		if (0 == elements.size()) {
 			element = createElement(parent, path, boughSort, 0, value, attributes, n, depth);
 		} else {
 			if (n==boughLevel) {
-				if (null==elements.item(boughSeq)) {
+				if (null==elements.get(boughSeq)) {
 					element = createElement(parent, path, boughSort, boughSeq, value, attributes, n, depth);
 				} else {
-					element = (Element) elements.item(boughSeq);
+					element = (Element) elements.get(boughSeq);
 				}
 			} else {
-				element = (Element) elements.item(0);
+				element = (Element) elements.get(0);
 			}
 		}
 		return element;
