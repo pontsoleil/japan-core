@@ -298,10 +298,10 @@ public class FileHandler {
 				String xPath = binding.getXPath();
 				String strippedXPath = stripSelector(xPath);
 				int idx = strippedXPath.lastIndexOf("/");
-				String additionalXpath = "";
-				String additionalXpath1 = "";
+				String additionalXPath = "";
+//				String additionalXpath1 = "";
 				if (idx >= 0) {
-					additionalXpath = strippedXPath.substring(0, idx);
+					additionalXPath = strippedXPath.substring(0, idx);
 				}
 				String l = binding.getLevel();
 				Integer level = Integer.parseInt(l);
@@ -313,20 +313,20 @@ public class FileHandler {
 					String parentXPath = parentBinding.getXPath();
 					String strippedParentXPath = stripSelector(parentXPath);
 //					System.out.println("- FileHandler.parseBinding check additional XPath " + parentID + "->" + id);
-					if (additionalXpath.length() > 0 &&
-							strippedParentXPath.indexOf(additionalXpath) < 0 &&
-							additionalXpath.indexOf(strippedParentXPath) < 0) {
-						additionalXpath = resumeSelector(additionalXpath, xPath);
-						System.out.println(id+" "+xPath+" "+parentID+" "+parentXPath+"\n    ADDED parent XPath: "+parentXPath+" additional Xpath: "+additionalXpath);
+					if (additionalXPath.length() > 0 &&
+							strippedParentXPath.indexOf(additionalXPath) < 0 &&
+							additionalXPath.indexOf(strippedParentXPath) < 0) {
+						additionalXPath = resumeSelector(additionalXPath, xPath);
+						System.out.println(id+" "+xPath+" "+parentID+" "+parentXPath+"\n    ADDED parent XPath: "+parentXPath+" additional Xpath: "+additionalXPath);
 						
-						parentBinding.addAdditionalXPath(additionalXpath);
+						parentBinding.addAdditionalXPath(additionalXPath);
 					} else if (idx > 0 && xPath.length() > 0 &&
 							strippedParentXPath.indexOf(xPath) < 0 &&
 							xPath.indexOf(strippedParentXPath) < 0) {
-						additionalXpath = xPath;
-						System.out.println(id+" "+xPath+" "+parentID+" "+parentXPath+"\n    ADDED parent XPath: "+parentXPath+" additional Xpath: "+additionalXpath);
+						additionalXPath = xPath;
+						System.out.println(id+" "+xPath+" "+parentID+" "+parentXPath+"\n    ADDED parent XPath: "+parentXPath+" additional Xpath: "+additionalXPath);
 						
-						parentBinding.addAdditionalXPath(additionalXpath);
+						parentBinding.addAdditionalXPath(additionalXPath);
 					}
 				}
 			}
