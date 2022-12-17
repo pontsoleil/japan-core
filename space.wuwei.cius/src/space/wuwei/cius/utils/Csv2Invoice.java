@@ -1,5 +1,4 @@
 package space.wuwei.cius.utils;
-//TODO define selector related elements
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -160,7 +159,7 @@ public class Csv2Invoice {
 			eTE.printStackTrace();
 		}
 		
-		System.out.println("** END **");
+		System.out.println("** END ** "+out_xml);
 	}
 
 	private static Element appendElementNS (
@@ -243,10 +242,6 @@ public class Csv2Invoice {
 			Integer boughSeq,
 			String value,
 			HashMap<String,String> attributes ) {
-		String selector = FileHandler.extractSelector(path);
-//		if (selector.length() > 0) {
-//			System.out.println("Csv2Invoice.fillLevelElement selector="+selector);
-//		}
 		path = FileHandler.stripSelector(path);
 		if (null==parent) {
 			System.out.println("- fillLevelElement parent null");
@@ -257,18 +252,28 @@ public class Csv2Invoice {
 		
 		Element element = null;
 		try {
+			System.out.println("- fillLevelElement size="+elements.size()+" boughSeq="+boughSeq+" "+path);
+			String selector = FileHandler.extractSelector(path);
+			HashMap<String,String> attrs = new HashMap<>();
 			if (0 == elements.size()) {
 				element = createElement(parent, path, boughSort, 0, value, attributes, n, depth);
+				if (selector.length() > 0) {
+					System.out.println("Csv2Invoice.fillLevelElement "+path+" selector="+selector);
+					defineSelector(n, depth, boughSort, boughSeq, element, selector, attrs);
+				}
 			} else {
 				if (n == boughLevel) {
-					System.out.println("- fillLevelElement size="+elements.size()+" boughSeq="+boughSeq);
 					if (boughSeq < elements.size()) {
 						element = (Element) elements.get(boughSeq);
 					} else {
 						element = createElement(parent, path, boughSort, boughSeq, value, attributes, n, depth);
+						System.out.println("Csv2Invoice.fillLevelElement "+path+" selector="+selector);
+						defineSelector(n, depth, boughSort, boughSeq, element, selector, attrs);
 					}
 				} else {
+					
 					element = (Element) elements.get(0);
+					
 				}
 			}			
 		} catch (Exception e) {
@@ -276,6 +281,23 @@ public class Csv2Invoice {
 			e.getStackTrace();
 		}
 		return element;
+	}
+
+	private static void defineSelector(int n, int depth, Integer boughSort, Integer boughSeq, Element element,
+			String selector, HashMap<String, String> attrs) {
+		selector = selector.substring(1,selector.length()-1);
+		String[] params = selector.split("=");
+		String selectorXPath = params[0];
+		String selectorValue = params[1];
+		String[] paths = selectorXPath.split("/");
+		for (String sPath : paths) {
+			Element el = null;
+			if (sPath.matches("^cac:.*$")) {
+				el = createElement(element, sPath, boughSort, boughSeq, "", attrs, n, depth);
+			} else {
+				createElement(el, sPath, boughSort, boughSeq, selectorValue, attrs, n, depth);
+			}
+		}
 	}
 	
 	private static Element createElement (
@@ -321,27 +343,6 @@ public class Csv2Invoice {
 			return element;
 		}
 	}
-	
-//	private static String extractSelector(
-//			String xPath ) {
-//		int start = xPath.indexOf("[");
-//		int last = xPath.lastIndexOf("]");
-//		String selector = "";
-//		if (start >= 0) {
-//			selector = xPath.substring(start, last+1);
-//		}
-//		return selector;
-//	}
-//	
-//	private static String stripSelector (
-//			String path ) {
-//		int start = path.indexOf("[");
-//		int last = path.lastIndexOf("]");
-//		if (start >= 0) {
-//			path = path.substring(0, start) + path.substring(last+1,path.length());	
-//		}
-//		return path;
-//	}
 
 	private static ArrayList<String> splitPath (
 			String xPath ) {
