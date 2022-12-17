@@ -27,7 +27,8 @@ public class Invoice2csv {
 	static TreeMap<Integer,String> dataMap = new TreeMap<>();
 
 	public static void main(String[] args) {
-		 processInvoice("data/xml/Example1.xml", "data/csv/Example1.csv");
+		 processInvoice("data/xml/Example0.xml", "data/csv/Example0.csv");
+//		 processInvoice("data/xml/Example1.xml", "data/csv/Example1.csv");
 //		 processInvoice("data/xml/Example2-TaxAcctCur.xml", "data/csv/Example2-TaxAcctCur.csv");
 //		 processInvoice("data/xml/Example3-SumInv1.xml", "data/csv/Example3-SumInv1.csv");
 //		 processInvoice("data/xml/Example4-SumInv2.xml", "data/csv/Example4-SumInv2.xsv");
@@ -211,25 +212,25 @@ public class Invoice2csv {
 				            		}
 			        			}
 			        		}
-		            	} else if (node.hasAttributes()) {
-							NamedNodeMap attributes = node.getAttributes();
-							int attrLength = attributes.getLength();
-							for (int j = 0; j < attrLength; j++) {
-								Node attribute = attributes.item(j);
-						        String name = attribute.getNodeName();
-						        String value1 = attribute.getNodeValue();
-						        System.out.println(name+" "+value1);
-						        fillData(childSort, value1, boughMap);
-		            		}
-		            	} else {	            		
-		            		NamedNodeMap attributes = node.getAttributes();
-		            		String attrNames[] = {"schemeID","currencyID","mimeCode","filename","listID","listVersionID"};
-		            		for (int j = 0; j < attrNames.length; j++){
-			            		String value1 = attributes.getNamedItem(attrNames[j]).getNodeValue();
-			            		if (!(null==value1 || value1.equals(""))) {
-			            			fillData(childSort, value1, boughMap);
-								}			            		
-		            		}
+//		            	} else if (node.hasAttributes()) {
+//							NamedNodeMap attributes = node.getAttributes();
+//							int attrLength = attributes.getLength();
+//							for (int j = 0; j < attrLength; j++) {
+//								Node attribute = attributes.item(j);
+//						        String name = attribute.getNodeName();
+//						        String value1 = attribute.getNodeValue();
+//						        System.out.println(name+" "+value1);
+//						        fillData(childSort, value1, boughMap);
+//		            		}
+//		            	} else {	            		
+//		            		NamedNodeMap attributes = node.getAttributes();
+//		            		String attrNames[] = {"schemeID","currencyID","mimeCode","filename","listID","listVersionID"};
+//		            		for (int j = 0; j < attrNames.length; j++){
+//			            		String value1 = attributes.getNamedItem(attrNames[j]).getNodeValue();
+//			            		if (!(null==value1 || value1.equals(""))) {
+//			            			fillData(childSort, value1, boughMap);
+//								}			            		
+//		            		}
 		            	}
 		            } else {
 			        	@SuppressWarnings("unchecked")
