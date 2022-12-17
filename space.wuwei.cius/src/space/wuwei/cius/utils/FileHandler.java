@@ -246,7 +246,6 @@ public class FileHandler {
 				String id = binding.getID();
 				Integer semSort = binding.getSemSort();
 				Integer synSort = binding.getSynSort();
-//				System.out.println("- FileHandler.parseBinding "+binding.getID()+" "+binding.getXPath());
 				bindingDict.put(id, binding);
 				semBindingMap.put(semSort, binding);
 				synBindingMap.put(synSort, binding);
@@ -255,7 +254,7 @@ public class FileHandler {
 			for (Entry<Integer, Binding> entry : semBindingMap.entrySet()) {
 				Integer semSort = entry.getKey();
 				Binding binding = entry.getValue();
-				String id = binding.getID();
+//				String id = binding.getID();
 				String l = binding.getLevel();
 				Integer level = Integer.parseInt(l);
 				parents[level] = semSort;
