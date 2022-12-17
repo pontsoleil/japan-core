@@ -16,7 +16,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 public class Csv2Invoice {
-	static String OUT_XML = "data/xml/Example1out.xml";
+	static String OUT_XML = "data/xml/Example1_out.xml";
 	static String IN_CSV = "data/csv/Example1.csv";
 	static String CHARSET = "UTF-8";
 	static String DOCUMENT_CURRENCY_CODE_ID = "ibt-005";
@@ -44,6 +44,13 @@ public class Csv2Invoice {
    
 	public static void main(String[] args) {
 		processCSV("data/csv/Example1.csv", "data/xml/Example1_out.xml");
+//		processCSV("data/csv/Example2-TaxAcctCur.csv","data/xml/Example2-TaxAcctCur_out.xml");
+//		processCSV("data/csv/Example3-SumInv1.csv","data/xml/Example3-SumInv1_out.xml");
+//		processCSV("data/csv/Example4-SumInv2.xsv","data/xml/Example4-SumInv2_out.xml");
+//		processCSV("data/csv/Example5-AllowanceCharge.csv","data/xml/Example5-AllowanceCharge_out.xml");
+//		processCSV("data/csv/Example6-CorrInv.csv","data/xml/Example6-CorrInv_out.xml");
+//		processCSV("data/csv/Example7-Return.Quan.csv","data/xml/Example7-Return.Quan_out.xml");
+//		processCSV("data/csv/Example8-Return.ItPr.csv","data/xml/Example8-Return.ItPr_out.xml");
 	}
 	
 	public static void processCSV(String in_csv, String out_xml) {
@@ -55,7 +62,7 @@ public class Csv2Invoice {
 		FileHandler.parseSkeleton();
 					
 		rowMapList = new TreeMap<>();
-		System.out.println("- Csv2Invoice.main FileHandler.tidyData record");
+		System.out.println("- processCSV FileHandler.tidyData record");
 		for (ArrayList<String> record: FileHandler.tidyData) {
 			System.out.println(record.toString());
 			rowMap = new TreeMap<>();
@@ -94,7 +101,7 @@ public class Csv2Invoice {
 			String[] boughs = key.split(",");
 			for (int i = 0; i < boughs.length; i++) {
 				String bough = boughs[i];
-				System.out.println(bough);
+//				System.out.println(bough);
 				String[] data = bough.split(" ");
 				for (int j = 0; j < data.length; j++) {
 					String ds = data[j];
@@ -128,7 +135,7 @@ public class Csv2Invoice {
 			boughSort = Integer.parseInt(d[0]);
 			boughSeq = Integer.parseInt(d[1]);
 			String boughXPath = levelElement.xPath;
-			System.out.println("levelElement "+boughSort+" "+boughSeq+" xPath:"+boughXPath);
+			System.out.println("- processCSV levelElement "+boughSort+" "+boughSeq+" xPath:"+boughXPath);
 			TreeMap<Integer, String> row = rowMapList.get(key);
 			for (Integer synSort : row.keySet()) {
 				value = row.get(synSort);
@@ -143,7 +150,7 @@ public class Csv2Invoice {
 				levelElement = new LevelElement(boughSeq, boughSort, xPath, element);
 			}
 		}
-		System.out.println("Csv2Invoice.main\n" + levelElementList.toString());
+		System.out.println("- processCSV\n" + levelElementList.toString());
 
 		try (FileOutputStream output = new FileOutputStream(out_xml)) {
 			WriteXmlDom.writeXml(FileHandler.doc, output);
@@ -153,7 +160,7 @@ public class Csv2Invoice {
 			eTE.printStackTrace();
 		}
 		
-		System.out.println("END");
+		System.out.println("** END **");
 	}
 
 	private static Element appendElementNS (
@@ -162,42 +169,59 @@ public class Csv2Invoice {
 			String xPath,
 			String value, 
 			HashMap<String,String> attributes) {
-		System.out.println("Csv2Invoice.appendElementNS " + boughSort + " " + boughSeq + " " + xPath +" value=" + value);		
+		if (value.length() > 0) {
+		value = value.trim();
+			System.out.println("- appendElementNS " + boughSort + "=" + boughSeq + " " + xPath +" value=" + value);
+		} else {
+			System.out.println("- appendElementNS " + boughSort + "=" + boughSeq + " " + xPath);
+		}
 		ArrayList<String> paths = splitPath(xPath);
 		int depth = paths.size();
 		Element element0 = FileHandler.root;
 		Element element1, element2, element3, element4, element5, element6;
-		System.out.println(boughSort+" "+boughSeq);
+//		System.out.println(boughSort+" "+boughSeq);
 		Binding boughBinding = FileHandler.synBindingMap.get(boughSort);
 		String boughXPath = boughBinding.getXPath();
 		ArrayList<String> boughPaths = splitPath(boughXPath);
 		int boughLevel = boughPaths.size()-1;	
 		if (depth > 1) {
-			element1 = fillLevelElement(1, depth, element0, paths.get(1), boughLevel, boughSort, boughSeq, value, attributes );	
-			if (2 == depth) {		
+			element1 = fillLevelElement(1, depth, element0, paths.get(1), boughLevel, boughSort, boughSeq, value, attributes );
+			if (null==element1) {
+				System.out.println("- appendElementNS element1 NULL");
+			} else if (2 == depth) {		
 				return element1;
 			} else {
 				element2 = fillLevelElement(2, depth, element1, paths.get(2), boughLevel, boughSort, boughSeq, value, attributes );
-				if (3==depth) {
+				if (null==element2) {
+					System.out.println("- appendElementNS element2 NULL");
+				} else if (3==depth) {
 					return element2;
 				} else {
 					element3 = fillLevelElement(3, depth, element2, paths.get(3), boughLevel, boughSort, boughSeq, value, attributes );
-					if (4==depth) {
+					if (null==element3) {
+						System.out.println("- appendElementNS element3 NULL");
+					} else if (4==depth) {
 						return element3;
 					} else {
 						element4 = fillLevelElement(4, depth, element3, paths.get(4), boughLevel, boughSort, boughSeq, value, attributes );
-						if (5==depth) {
+						if (null==element4) {
+							System.out.println("- appendElementNS element4 NULL");
+						} else if (5==depth) {
 							return element4;
 						} else {
 							element5 = fillLevelElement(5, depth, element4, paths.get(5), boughLevel, boughSort, boughSeq, value, attributes );
-							if (6==depth) {
+							if (null==element5) {
+								System.out.println("- appendElementNS elemen51 NULL");
+							} else if (6==depth) {
 								return element5;
 							} else {
 								element6 = fillLevelElement(6, depth, element5, paths.get(6), boughLevel, boughSort, boughSeq, value, attributes );
-								if (5==depth) {
+								if (null==element6) {
+									System.out.println("- appendElementNS element6 NULL");
+								} else if (5==depth) {
 									return element6;
 								} else {
-									System.out.println("Csv2Invoice.appendElementNS appendElementNS XPath dpth is too deep 7.");
+									System.out.println("- appendElementNS appendElementNS XPath dpth is too deep 7.");
 									return null;
 								}
 							}
@@ -220,24 +244,36 @@ public class Csv2Invoice {
 			String value,
 			HashMap<String,String> attributes ) {
 		String selector = FileHandler.extractSelector(path);
-		if (selector!="") {
-			System.out.println(selector);
-		}
+//		if (selector.length() > 0) {
+//			System.out.println("Csv2Invoice.fillLevelElement selector="+selector);
+//		}
 		path = FileHandler.stripSelector(path);
+		if (null==parent) {
+			System.out.println("- fillLevelElement parent null");
+			parent = FileHandler.root;
+		}
+		
 		List<Node> elements = FileHandler.getXPath(parent, path);
+		
 		Element element = null;
-		if (0 == elements.size()) {
-			element = createElement(parent, path, boughSort, 0, value, attributes, n, depth);
-		} else {
-			if (n==boughLevel) {
-				if (null==elements.get(boughSeq)) {
-					element = createElement(parent, path, boughSort, boughSeq, value, attributes, n, depth);
-				} else {
-					element = (Element) elements.get(boughSeq);
-				}
+		try {
+			if (0 == elements.size()) {
+				element = createElement(parent, path, boughSort, 0, value, attributes, n, depth);
 			} else {
-				element = (Element) elements.get(0);
-			}
+				if (n == boughLevel) {
+					System.out.println("- fillLevelElement size="+elements.size()+" boughSeq="+boughSeq);
+					if (boughSeq < elements.size()) {
+						element = (Element) elements.get(boughSeq);
+					} else {
+						element = createElement(parent, path, boughSort, boughSeq, value, attributes, n, depth);
+					}
+				} else {
+					element = (Element) elements.get(0);
+				}
+			}			
+		} catch (Exception e) {
+			System.out.println("- fillLevelElement "+elements.toString());
+			e.getStackTrace();
 		}
 		return element;
 	}

@@ -45,10 +45,10 @@ public class Invoice2csv {
 	    boughMapList = new ArrayList<TreeMap<Integer, Integer>>();
 	    rowMap = new TreeMap<Integer, String>();
 	    rowMapList = new TreeMap<String, TreeMap<Integer, String>>();
-
+	
 	    FileHandler.parseBinding();
-		
 		FileHandler.doc = FileHandler.parseInvoice(in_xml);
+		FileHandler.parseDoc();
 	    
 		for (Map.Entry<String, Binding> entry : FileHandler.bindingDict.entrySet()) {
 			Binding binding = entry.getValue();
@@ -134,7 +134,8 @@ public class Invoice2csv {
         String id = binding.getID();
 		String businessTerm = binding.getBT();
 		binding.setUsed(true);
-		System.out.println("- fillData boughMap=" + boughMap.toString() + sort + "(" + id + ")" + businessTerm + " " + value);
+		value = value.trim();
+		System.out.println("- fill Data boughMap=" + boughMap.toString() + sort + "(" + id + ")" + businessTerm + " " + value);
 
 		String rowMapKey = "";
 		for (Map.Entry<Integer, Integer> entry : boughMap.entrySet()) {
@@ -161,13 +162,14 @@ public class Invoice2csv {
 		Binding binding = FileHandler.semBindingMap.get(sort);
 		String id = binding.getID();
 		String businessTerm = binding.getBT();
+		String xPath = binding.getXPath();
 
 		TreeMap<Integer, List<Node>> childList = FileHandler.getChildren(parent, id);
 		
 		if (childList.size() > 0) {
-			System.out.println("- fillGroup boughMap=" + boughMap.toString() + sort + "(" + id + ")" + businessTerm );
+			System.out.println("- fill Group boughMap=" + boughMap.toString() + sort + "(" + id + ")" + businessTerm );
 		} else {
-			System.out.println("- fillGroup boughMap=" + boughMap.toString() + sort + "(" + id + ")" + businessTerm + " is Empty" );
+			System.out.println("- fill Group boughMap=" + boughMap.toString() + sort + "(" + id + ")" + businessTerm + " is Empty" );
 			return;
 		}
    	
@@ -175,8 +177,10 @@ public class Invoice2csv {
 			Binding childBinding = (Binding) FileHandler.semBindingMap.get(childSort);
             String childID = childBinding.getID();
     		String childBusinessTerm = childBinding.getBT();
+    		String childXPath = childBinding.getXPath();
     		int childLevel = Integer.parseInt(childBinding.getLevel());
-           
+			System.out.println("- fill Group " + childSort + "(" + childID + ")" + childBusinessTerm + " " +  childXPath);
+          
             List<Node> nodes = childList.get(childSort);
             
             Integer countNodes = nodes.size();             
@@ -184,27 +188,52 @@ public class Invoice2csv {
 	            for (int i = 0; i < countNodes; i++) {
 	            	Node node = nodes.get(i);
 		        	if (childID.matches("^ibt-[0-9]+.*$")) {
-	        			String value = node.getTextContent();
-		            	if (!(null==value || value.equals(""))) {
+	        			String value = node.getTextContent().trim();
+		            	if (null != value && value.length() > 0) {
 		            		
 			            	fillData(childSort, value, boughMap);
 			            	
+			        		if (FileHandler.childMap.containsKey(childSort)) {
+			        			ArrayList<Integer> grandchildren = FileHandler.childMap.get(childSort);
+			        			for (Integer grandchildSort : grandchildren) {
+			        				Binding grandchildBiunding =  (Binding) FileHandler.semBindingMap.get(grandchildSort);
+			        				String grandchildID = grandchildBiunding.getID();
+			        				String grandchildBT = grandchildBiunding.getBT();
+//			        				String grandchildXPath = grandchildBiunding.getXPath();
+				                	System.out.println("* fill Group "+childID+" boughMapList="+boughMapList.toString()+" boughMap" + boughMap.toString() + " grandchild(" + grandchildSort + ")"+grandchildID+" level=" + childLevel + " " +  childBusinessTerm + "->" + grandchildBT);
+				                	ParsedNode parsedNode = FileHandler.nodeMap.get(grandchildSort);
+				                	List<Node> grandchildNodes = parsedNode.nodes;
+				            		for (int j = 0; j < grandchildNodes.size(); j++) {
+				            			Node grandchildNode = grandchildNodes.get(j);
+				            			System.out.println(i+" "+node.getNodeName()+" "+node.getTextContent());
+				        				String grandchildValue = grandchildNode.getTextContent().trim();
+				        				fillData(grandchildSort, grandchildValue, boughMap);
+				            		}
+			        			}
+			        		}
+		            	} else if (node.hasAttributes()) {
+							NamedNodeMap attributes = node.getAttributes();
+							int attrLength = attributes.getLength();
+							for (int j = 0; j < attrLength; j++) {
+								Node attribute = attributes.item(j);
+						        String name = attribute.getNodeName();
+						        String value1 = attribute.getNodeValue();
+						        System.out.println(name+" "+value1);
+						        fillData(childSort, value1, boughMap);
+		            		}
 		            	} else {	            		
 		            		NamedNodeMap attributes = node.getAttributes();
 		            		String attrNames[] = {"schemeID","currencyID","mimeCode","filename","listID","listVersionID"};
 		            		for (int j = 0; j < attrNames.length; j++){
 			            		String value1 = attributes.getNamedItem(attrNames[j]).getNodeValue();
 			            		if (!(null==value1 || value1.equals(""))) {
-			            			
 			            			fillData(childSort, value1, boughMap);
-			            			
 								}			            		
 		            		}
 		            	}
 		            } else {
 			        	@SuppressWarnings("unchecked")
 						TreeMap<Integer,Integer> boughMap1 = (TreeMap<Integer, Integer>) boughMap.clone();
-	                	System.out.println("* fillGroup boughMapList="+boughMapList.toString()+" boughMap1" + boughMap1.toString() + " boughMap1.size=" + boughMap1.size() + " child(" + childSort + ") level=" + childLevel + " " +  businessTerm + "->" + childBusinessTerm);
 		            	boolean is_multiple = isMultiple(childSort);
 		                if (is_multiple && countNodes > 1) {
 		                	Integer lastkey = boughMap1.lastKey();
@@ -225,6 +254,7 @@ public class Invoice2csv {
 			            	boughMapList.add(boughMap1);
 			            	System.out.println(" UPDATED boughMapList=" + boughMapList.toString() + " boughMap1=" + boughMap1.toString());
 		                }
+	                	System.out.println("* fill Group "+childID+" boughMapList="+boughMapList.toString()+" boughMap1" + boughMap1.toString() + " child(" + childSort + ") level=" + childLevel + " " +  businessTerm + "->" + childBusinessTerm);
 	                	fillGroup(node, childSort, boughMap1);
 		            }
 	            }
