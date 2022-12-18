@@ -55,6 +55,7 @@ public class FileHandler {
 	public static XPath xpath = null;
 	public static Element root = null;
 	public static String ROOT_ID = "ibg-00";
+	public static String[] MULTIPLE_ID = {"ibg-20", "ibg-21", "ibg-23", "ibg-25","ibg-27", "ibg-28"};
 	public static HashMap<String, String> nsURIMap = null;
 	
 	public static ArrayList<String> header = new ArrayList<>();
@@ -336,15 +337,15 @@ public class FileHandler {
 		}
 	}
 	
-	private static int countChar(char ch, String str) {
-		int count = 0;
-		for (int i = 0; i < str.length(); i++) {
-		    if (str.charAt(i) == ch) {
-		        count++;
-		    }
-		}
-		return count;
-	}
+//	private static int countChar(char ch, String str) {
+//		int count = 0;
+//		for (int i = 0; i < str.length(); i++) {
+//		    if (str.charAt(i) == ch) {
+//		        count++;
+//		    }
+//		}
+//		return count;
+//	}
 	
 	public static Document parseInvoice(String xmlfile) {
 		try {
@@ -370,6 +371,9 @@ public class FileHandler {
 			Binding binding = semBindingMap.get(semSort);
 			String xPath = binding.getXPath();
 			List<Node> nodes = getXPath(root, xPath);
+			if (nodes.size() > 0) {
+				binding.setUsed(true);
+			}
 			ParsedNode parsedNode = new ParsedNode(binding, nodes);
 			nodeMap.put(semSort, parsedNode);
 		}		
@@ -596,14 +600,17 @@ public class FileHandler {
 			String qname, 
 			String value, 
 			HashMap<String, String> attrMap ) {
-//		System.out.println("- FileHaldler.appendElementNS "+prefix+":"+qname);
+		if (null==parent) {
+			System.out.println("- FileHaldler.appendElementNS "+prefix+":"+qname+" parent is NULL");
+			return null;
+		}
 		try {
 			if ("@".equals(qname.substring(0,1))) {
 				String attrName = qname.substring(1, qname.length());
 				Attr attribute = doc.createAttribute(attrName);
 				attribute.setValue(value);
 				parent.setAttributeNode(attribute);
-				return null;
+				return parent;
 			} else {
 				Element element = doc.createElementNS(nsURI, qname);
 				element.setPrefix(prefix); // Set the desired namespace and prefix
@@ -628,73 +635,72 @@ public class FileHandler {
 		}
 	}
 	
-	public static void writeXML(Document doc, String filename)  {
-		try {
-		    TransformerFactory transformerFactory = TransformerFactory.newInstance();
-		    Transformer transformer = transformerFactory.newTransformer();
-		    DOMSource source = new DOMSource(doc);
-		    FileOutputStream output = new FileOutputStream(filename);
-			StreamResult result = new StreamResult(output);
-	        // pretty print XML
-	        transformer.setOutputProperty(OutputKeys.INDENT, "yes");		    
-			transformer.transform(source, result);
-		} catch (FileNotFoundException | TransformerException | TransformerFactoryConfigurationError e) {
-			e.printStackTrace();
-		}
+	public static void writeXML(Document doc, String filename)
+			throws
+			FileNotFoundException,
+			TransformerException,
+			TransformerFactoryConfigurationError,
+			IOException {
+	    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+	    Transformer transformer = transformerFactory.newTransformer();
+	    DOMSource source = new DOMSource(doc);
+	    FileOutputStream output = new FileOutputStream(filename);
+		StreamResult result = new StreamResult(output);
+        // pretty print XML
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");		    
+		transformer.transform(source, result);
 	}
 
-	public static void csvFileWrite(String filename, String charset) {
+	public static void csvFileWrite(String filename, String charset)
+			throws
+			FileNotFoundException,
+			IOException {
 		System.out.println("- FileHandler.csvFileWrite " + filename + " " + charset);
-		try {
-			FileOutputStream fo = new FileOutputStream(filename);
-			Charset cs = Charset.forName(charset);
-			OutputStreamWriter osw = new OutputStreamWriter(fo, cs);
-			BufferedWriter bw = new BufferedWriter(osw);
-			// header
-			String headerLine = String.join(",", header);
-			bw.write(headerLine);
+		FileOutputStream fo = new FileOutputStream(filename);
+		Charset cs = Charset.forName(charset);
+		OutputStreamWriter osw = new OutputStreamWriter(fo, cs);
+		BufferedWriter bw = new BufferedWriter(osw);
+		// header
+		String headerLine = String.join("\t", header);
+		bw.write(headerLine);
+        bw.write("\n");
+        // data
+        for(int i=0; i < tidyData.size(); i++) {
+        	String line = String.join("\t", tidyData.get(i));
+            bw.write(line);
             bw.write("\n");
-            // data
-            for(int i=0; i < tidyData.size(); i++) {
-            	String line = String.join(",", tidyData.get(i));
-                bw.write(line);
-                bw.write("\n");
-            }
-            bw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+        bw.close();
 	}
 
-	public static void csvFileRead(String filename, String charset) {
+	public static void csvFileRead(String filename, String charset)
+			throws
+			FileNotFoundException,
+			IOException {
 		System.out.println("-- FileHandler.csvFileRead " + filename + " " + charset);
 		header = new ArrayList<String>();
 		tidyData = new ArrayList<ArrayList<String>>();
-		try {
-			FileInputStream fi = new FileInputStream(filename);
-			Charset cs = Charset.forName(charset);
-			InputStreamReader isw = new InputStreamReader(fi, cs);
-			BufferedReader br = new BufferedReader(isw);
-			// header
-			String headerLine = br.readLine();
-			String[] fields = headerLine.split(",");
+		FileInputStream fi = new FileInputStream(filename);
+		Charset cs = Charset.forName(charset);
+		InputStreamReader isw = new InputStreamReader(fi, cs);
+		BufferedReader br = new BufferedReader(isw);
+		// header
+		String headerLine = br.readLine();
+		String[] fields = headerLine.split("\t");
+		for (String field : fields) {
+			header.add(field);
+		}
+		// data
+		String line;		
+		while ((line = br.readLine()) != null) {
+			fields = line.split("\t");
+			ArrayList<String> record = new ArrayList<String>();
 			for (String field : fields) {
-				header.add(field);
+				record.add(field);
 			}
-			// data
-			String line;		
-			while ((line = br.readLine()) != null) {
-				fields = line.split(",");
-				ArrayList<String> record = new ArrayList<String>();
-				for (String field : fields) {
-					record.add(field);
-				}
-				tidyData.add(record);
-			}
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+			tidyData.add(record);
+		}
+        br.close();
 	}
 
 }
