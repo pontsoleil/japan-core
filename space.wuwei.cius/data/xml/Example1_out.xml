@@ -7,6 +7,10 @@
     <cbc:IssueDate>2023-10-24</cbc:IssueDate>
     <cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>
     <cbc:DocumentCurrencyCode>JPY</cbc:DocumentCurrencyCode>
+    <cac:InvoicePeriod>
+        <cbc:StartDate>2023-10-18</cbc:StartDate>
+        <cbc:EndDate>2023-10-18</cbc:EndDate>
+    </cac:InvoicePeriod>
     <cac:AccountingSupplierParty>
         <cac:Party>
             <cbc:EndpointID schemeID="0188">1234567890123</cbc:EndpointID>
