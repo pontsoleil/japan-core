@@ -1,16 +1,17 @@
 package space.wuwei.cius.utils;
 
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.xml.transform.TransformerException;
 
-//import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -30,12 +31,19 @@ public class Csv2Invoice {
  		public Integer sort;
  		public String xPath;
  		public String value;
+ 		public HashMap<String,String> attributes;
  		// constructor
- 		DataValue(Integer seq, Integer sort, String xPath, String value) {
+ 		DataValue(
+ 				Integer seq, 
+ 				Integer sort, 
+ 				String xPath, 
+ 				String value, 
+ 				HashMap<String,String> attributes) {
  			this.seq = seq;
  			this.sort = sort;
  			this.xPath = xPath;
  			this.value = value;
+ 			this.attributes = attributes;
  		}
     }
     
@@ -70,6 +78,9 @@ public class Csv2Invoice {
 		
 		try {
 			FileHandler.csvFileRead(in_csv, CHARSET);
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found "+in_csv);
+			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -81,7 +92,9 @@ public class Csv2Invoice {
 		System.out.println("- processCSV FileHandler.tidyData record");
 		
 		for (ArrayList<String> record: FileHandler.tidyData) {
+			
 			System.out.println(record.toString());
+			
 			rowMap = new TreeMap<>();
 			String key = "";
 			for (int i = 0; i < record.size(); i++) {
@@ -89,8 +102,13 @@ public class Csv2Invoice {
 				if (field.length() > 0) {
 					String id = FileHandler.header.get(i);
 					Binding binding = FileHandler.bindingDict.get(id);
+					if (null==binding) {
+						System.out.println("NULL");
+						id = FileHandler.header.get(0).split(",")[i];
+						binding = FileHandler.bindingDict.get(id);
+					}
 					Integer sort = binding.getSynSort();
-					if (id.toLowerCase().matches("^ibg-[0-9]+$")) {
+					if (id.toLowerCase().matches("^ibg-.+$")) {
 						key += sort+"="+field+" ";
 					} else {
 						rowMap.put(sort, field);
@@ -116,8 +134,9 @@ public class Csv2Invoice {
 		String xPath = null;
 		String value = "";
 		HashMap<String,String> attributes = new HashMap<>();
-		int i = 0;		
-
+		TreeMap<Integer/*synSort*/, String/*id*/> idMap = new TreeMap<>();
+		
+		int n = 0;		
 		System.out.println(FileHandler.header);
 		for (Map.Entry<String, TreeMap<Integer, String>> rowMap : rowMapList.entrySet()) {
 			String key = rowMap.getKey();
@@ -125,19 +144,18 @@ public class Csv2Invoice {
 			int j = 0;
 			for (Integer synSort : row.keySet()) {
 				Binding binding = FileHandler.synBindingMap.get(synSort);
-				Integer id = binding.getID();
-				
-				
-				j++;
+				id = binding.getID();
+				int idx = FileHandler.header.indexOf(id);
+				idMap.put(synSort, id);
 			}
-			i++;
+			n++;
 		}
 		
-		int row_size = rowMapList.entrySet().size()+1;
-		int col_size = rowMapList.keySet().size()+1;
-		DataValue[][] dataRedords = new DataValue[row_size][col_size];
+		int row_size = n;
+		int col_size = idMap.size();
+		DataValue[][] dataRedords = new DataValue[row_size][col_size];	
 		
-		i = 0;
+		int i = 0;
 		for (Map.Entry<String, TreeMap<Integer, String>> rowMap : rowMapList.entrySet()) {
 			String key = rowMap.getKey();
 			String[] boughs = key.split(",");
@@ -148,12 +166,12 @@ public class Csv2Invoice {
 			boughSort = Integer.parseInt(d[0]);
 			boughSeq = Integer.parseInt(d[1]);
 			TreeMap<Integer, String> row = rowMapList.get(key);
-			int j = 0;
 			for (Integer synSort : row.keySet()) {
 				value = row.get(synSort);
 				Binding binding = FileHandler.synBindingMap.get(synSort);
 				xPath = binding.getXPath();
 				String datatype = binding.getDatatype();
+				attributes = new HashMap<>();
 				if ("Amount".equals(datatype) || "Unit Price Amount".equals(datatype)) {
 					if (xPath.length() > 0) {
 						if (null!=taxCurrencyCode.xPath && xPath.indexOf(taxCurrencyCode.xPath)>=0) {
@@ -163,21 +181,28 @@ public class Csv2Invoice {
 						}
 					}
 				}
+		        // Get key set of the TreeMap using keySet method
+		        Set<Integer > keySet = idMap.keySet();
+		        // Converting entrySet to ArrayList
+		        List<Integer> entryList = new ArrayList<>(keySet);
+		        int j = entryList.indexOf(synSort);
 				System.out.println(i+" "+j);
-				dataRedords[i][j] = new DataValue(boughSeq, boughSort, xPath, value);
-				j++;
+				dataRedords[i][j] = new DataValue(boughSeq, boughSort, xPath, value, attributes);
 			}
 			i++;
 		}
 		
-		for (int x = 0; x < row_size; x++) {
-	        for (int y = 0; y < col_size; y++) {
+	    for (int y = 0; y < col_size; y++) {
+	    	for (int x = 0; x < row_size; x++) {
 	        	DataValue dataValue = dataRedords[x][y];
-	        	boughSeq = dataValue.seq;
-	        	boughSort = dataValue.sort;
-	        	xPath = dataValue.xPath;
-	        	value = dataValue.value;
-				Element element = appendElementNS(boughSeq, boughSort, xPath, value, attributes);
+	        	if (null != dataValue) {
+		        	boughSeq = dataValue.seq;
+		        	boughSort = dataValue.sort;
+		        	xPath = dataValue.xPath;
+		        	value = dataValue.value;
+		        	attributes = dataValue.attributes;
+					appendElementNS(boughSeq, boughSort, xPath, value, attributes);
+	        	}
 	        }
 	    }
 
