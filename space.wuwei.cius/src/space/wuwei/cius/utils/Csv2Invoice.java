@@ -24,23 +24,21 @@ public class Csv2Invoice {
     // CSV records
     static TreeMap<Integer, String> rowMap = new TreeMap<>();
     static TreeMap<String, TreeMap<Integer, String>> rowMapList = new TreeMap<>();
-    // semantic data
- 	static class LevelElement {
- 		public Integer seq;
+ 	
+    static class DataValue {
+    	public Integer seq;
  		public Integer sort;
  		public String xPath;
- 		public Element element;
+ 		public String value;
  		// constructor
- 		LevelElement(Integer seq, Integer sort, String xPath, Element element) {
+ 		DataValue(Integer seq, Integer sort, String xPath, String value) {
  			this.seq = seq;
  			this.sort = sort;
  			this.xPath = xPath;
- 			this.element = element;
+ 			this.value = value;
  		}
- 	}
- 	static TreeMap<String, LevelElement> boughElementMap = new TreeMap<>();
- 	static ArrayList<LevelElement> levelElementList = new ArrayList<>();
- 	
+    }
+    
  	static class PathValue {
  		public String xPath;
  		public String value;
@@ -67,15 +65,15 @@ public class Csv2Invoice {
 	}
 	
 	public static void processCSV(String in_csv, String out_xml) {
-//		String DocumentCurrencyCode = null;
-//		String TaxCurrencyCode = null;
 		
 		FileHandler.parseBinding();
+		
 		try {
 			FileHandler.csvFileRead(in_csv, CHARSET);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
 		FileHandler.parseSkeleton();
 					
 		rowMapList = new TreeMap<>();
@@ -111,60 +109,50 @@ public class Csv2Invoice {
 			rowMapList.put(key, rowMap);
 		}
 		
-		Element boughElement = null;
-		LevelElement levelElement = null;
+//		Element boughElement = null;
 		Integer boughSort = null;
 		Integer boughSeq = null;
 		String id = null;
 		String xPath = null;
 		String value = "";
+		HashMap<String,String> attributes = new HashMap<>();
+		int i = 0;		
+
+		System.out.println(FileHandler.header);
+		for (Map.Entry<String, TreeMap<Integer, String>> rowMap : rowMapList.entrySet()) {
+			String key = rowMap.getKey();
+			TreeMap<Integer, String> row = rowMapList.get(key);
+			int j = 0;
+			for (Integer synSort : row.keySet()) {
+				Binding binding = FileHandler.synBindingMap.get(synSort);
+				Integer id = binding.getID();
+				
+				
+				j++;
+			}
+			i++;
+		}
+		
+		int row_size = rowMapList.entrySet().size()+1;
+		int col_size = rowMapList.keySet().size()+1;
+		DataValue[][] dataRedords = new DataValue[row_size][col_size];
+		
+		i = 0;
 		for (Map.Entry<String, TreeMap<Integer, String>> rowMap : rowMapList.entrySet()) {
 			String key = rowMap.getKey();
 			String[] boughs = key.split(",");
-			for (int i = 0; i < boughs.length; i++) {
-				String bough = boughs[i];
-				String[] data = bough.split(" ");
-				for (int j = 0; j < data.length; j++) {
-					String ds = data[j];
-					String[] d = ds.split("=");
-					boughSort = Integer.parseInt(d[0]);
-					boughSeq = Integer.parseInt(d[1]);
-					Binding boughBinding = FileHandler.synBindingMap.get(boughSort);
-					id = boughBinding.getID();
-					xPath = boughBinding.getXPath();
-					value = "";
-					HashMap<String,String> attributes = null;
-					if (FileHandler.ROOT_ID.equals(id)) {
-						boughElement = FileHandler.root;
-						levelElement = new LevelElement(boughSeq, boughSort, xPath, boughElement);
-						if (0==levelElementList.size()) {
-							levelElementList.add(levelElement);
-						}
-					} else {
-						boughElement = appendElementNS(boughSeq, boughSort, xPath, value, attributes);
-						levelElement = new LevelElement(boughSeq, boughSort, xPath, boughElement);
-					}
-					boughElementMap.put(boughSort+" "+boughSeq, levelElement);
-				}
-			}
-
-			// row data
 			String bough = boughs[boughs.length-1];
 			String[] data = bough.split(" ");
 			String ds = data[data.length-1];
 			String[] d = ds.split("=");
 			boughSort = Integer.parseInt(d[0]);
 			boughSeq = Integer.parseInt(d[1]);
-			String boughXPath = levelElement.xPath;
-			
-			System.out.println("- processCSV levelElement "+boughSort+" "+boughSeq+" xPath:"+boughXPath);
-			
 			TreeMap<Integer, String> row = rowMapList.get(key);
+			int j = 0;
 			for (Integer synSort : row.keySet()) {
 				value = row.get(synSort);
 				Binding binding = FileHandler.synBindingMap.get(synSort);
 				xPath = binding.getXPath();
-				HashMap<String,String> attributes = new HashMap<>();
 				String datatype = binding.getDatatype();
 				if ("Amount".equals(datatype) || "Unit Price Amount".equals(datatype)) {
 					if (xPath.length() > 0) {
@@ -175,11 +163,65 @@ public class Csv2Invoice {
 						}
 					}
 				}
-				Element element = appendElementNS(boughSeq, boughSort, xPath, value, attributes);
-				levelElement = new LevelElement(boughSeq, boughSort, xPath, element);
+				System.out.println(i+" "+j);
+				dataRedords[i][j] = new DataValue(boughSeq, boughSort, xPath, value);
+				j++;
 			}
+			i++;
 		}
-//		System.out.println("- processCSV\n" + levelElementList.toString());
+		
+		for (int x = 0; x < row_size; x++) {
+	        for (int y = 0; y < col_size; y++) {
+	        	DataValue dataValue = dataRedords[x][y];
+	        	boughSeq = dataValue.seq;
+	        	boughSort = dataValue.sort;
+	        	xPath = dataValue.xPath;
+	        	value = dataValue.value;
+				Element element = appendElementNS(boughSeq, boughSort, xPath, value, attributes);
+	        }
+	    }
+
+//		for (Map.Entry<String, TreeMap<Integer, String>> rowMap : rowMapList.entrySet()) {
+//			String bough = rowMap.getKey();
+//			TreeMap<Integer, String> row = rowMapList.get(bough);
+//			for (Integer synSort : row.keySet()) {
+//				value = row.get(synSort);
+//				TreeMap<String/*bough*/,String> transposedRow1= new TreeMap<>();
+//				if (transposedMapList.containsKey(synSort)) {
+//					transposedRow1 = transposedMapList.get(synSort);
+//				}
+//				transposedRow1.put(bough, value);
+//				transposedMapList.put(synSort, transposedRow);
+//			}
+//		}
+//		
+//		for (Map.Entry<Integer, TreeMap<String, String>> transposedMap : transposedMapList.entrySet()) {
+//			Integer synSort = transposedMap.getKey();
+//			TreeMap<String/*bough*/,String> transposedRow1 = transposedMap.getValue();
+//			for (String bough : transposedRow1.keySet()) {
+//				String[] data = bough.split(" ");
+//				String[] d = data[data.length-1].split("=");
+//				boughSort = Integer.parseInt(d[0]);
+//				boughSeq = Integer.parseInt(d[1]);
+//				value = transposedRow1.get(bough);
+//				Binding binding = FileHandler.synBindingMap.get(synSort);
+//				xPath = binding.getXPath();
+//				HashMap<String,String> attributes = new HashMap<>();
+//				String datatype = binding.getDatatype();
+//				if ("Amount".equals(datatype) || "Unit Price Amount".equals(datatype)) {
+//					if (xPath.length() > 0) {
+//						if (null!=taxCurrencyCode.xPath && xPath.indexOf(taxCurrencyCode.xPath)>=0) {
+//							attributes.put("currencyID", taxCurrencyCode.value);
+//						} else {
+//							attributes.put("currencyID", documentCurrencyCode.value);
+//						}
+//					}
+//				}
+//				appendElementNS(boughSeq, boughSort, xPath, value, attributes);
+////				levelElement = new LevelElement(boughSeq, boughSort, xPath, element);				
+//			}
+//		}
+
 		try (FileOutputStream output = new FileOutputStream(out_xml)) {
 			WriteXmlDom.writeXml(FileHandler.doc, output);
 		} catch (IOException eIO) {
@@ -197,6 +239,9 @@ public class Csv2Invoice {
 			String xPath,
 			String value, 
 			HashMap<String,String> attributes) {
+		if (']'==xPath.charAt(xPath.length()-1)) {
+			return null;
+		}
 		value = value.trim();
 		if (value.length() > 0) {
 			System.out.println("* appendElementNS " + boughSort + "=" + boughSeq + " " + xPath +"=" + value);
@@ -341,7 +386,6 @@ public class Csv2Invoice {
 			int level,
 			int depth ) {
 		Element element = null;
-		LevelElement levelElement = null;
 		String cacValue = "";
 		HashMap<String,String> cacAttributes = null;
 				
@@ -365,12 +409,6 @@ public class Csv2Invoice {
 			return null;
 		} else {
 			element = FileHandler.appendElementNS(parent, nsURI, ns, qname, value, attributes);
-			levelElement = new LevelElement(boughSeq, boughSort, path, element);
-			if (level == levelElementList.size()) {
-				levelElementList.add(levelElement);
-			} else {
-				levelElementList.set(level, levelElement);
-			}
 			return element;
 		}
 	}

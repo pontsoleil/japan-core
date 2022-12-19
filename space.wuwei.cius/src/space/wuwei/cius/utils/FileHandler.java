@@ -214,8 +214,9 @@ public class FileHandler {
 			//Read the file line by line
 //			System.out.println(headers.toString());
 			while ((line = fileReader.readLine()) != null) {
-				String[] tokens = line.split(",");		
-				// ﻿s﻿semSort,id,card,level,businessTerm,desc,dataType,businessTerm_ja,desc_ja,synSort,element,synDatatype,xPath,occur
+				String[] tokens = line.split(",");
+				// semSort,id,card,level,businessTerm,desc,dataType,businessTerm_ja,desc_ja,synSort,element,synDatatype,xPath,occur
+				// 1       2  3    4     5            6    7        8               9       10      11      12          13    14				
 				Binding binding = new Binding(0, "", "", "", "", "", 0, "", "");
 				for (int i = 0; i < headers.length; i++) {
 					String key = headers[i];
@@ -269,15 +270,15 @@ public class FileHandler {
 			for (Entry<Integer, Binding> entry : semBindingMap.entrySet()) {
 				Integer semSort = entry.getKey();
 				Binding binding = entry.getValue();
-				String id = binding.getID();
+//				String id = binding.getID();
 				String l = binding.getLevel();
 				Integer level = Integer.parseInt(l);
 				parents[level] = semSort;
 				if (level > 0) {
 					int parent_level = level - 1;
 					Integer parent_semSort = parents[parent_level];
-					Binding parent_binding = semBindingMap.get(parent_semSort);
-					String parentID = parent_binding.getID();
+//					Binding parent_binding = semBindingMap.get(parent_semSort);
+//					String parentID = parent_binding.getID();
 //					System.out.println("- FileHandler.parseBinding " + parentID + "->" + id);
 					ArrayList<Integer> children = null;
 					if (childMap.containsKey(parent_semSort)) {
@@ -586,8 +587,12 @@ public class FileHandler {
 			if (start >= 0) {
 				String selector = path.substring(start, last+1);
 				String header = strippedPath.substring(0, start);
-				String trailer = strippedPath.substring(start+1, strippedPath.length());
-				resumedPath = header + selector + "/" + trailer;
+				if (start+1 > strippedPath.length()) {
+					resumedPath = header + selector;
+				} else {
+					String trailer = strippedPath.substring(start+1, strippedPath.length());
+					resumedPath = header + selector + "/" + trailer;
+				}
 			}
 		}
 		return resumedPath;	

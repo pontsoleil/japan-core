@@ -65,7 +65,7 @@ public class Invoice2csv {
 			Integer sort = binding.getSemSort();
 			String id = binding.getID();
 			String card = binding.getCard();
-			String xPath = binding.getXPath();
+//			String xPath = binding.getXPath();
 			if (id.toLowerCase().matches("^ibg-.+$") && card.matches("^.*n$") && isMultiple(sort)) {
 				FileHandler.multipleMap.put(sort, id);
 			}
@@ -190,7 +190,7 @@ public class Invoice2csv {
 		Binding binding = FileHandler.semBindingMap.get(sort);
 		String id = binding.getID();
 		String businessTerm = binding.getBT();
-		String xPath = binding.getXPath();
+//		String xPath = binding.getXPath();
 
 		TreeMap<Integer, List<Node>> childList = FileHandler.getChildren(parent, id);
 		
