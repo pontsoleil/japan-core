@@ -1,4 +1,4 @@
-package space.wuwei.cius.utils;
+package wuwei.japan_core.cius;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

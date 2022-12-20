@@ -1,4 +1,4 @@
-package space.wuwei.cius.utils;
+package wuwei.japan_core.utils;
 //https://mkyong.com/java/how-to-create-xml-file-in-java-dom/#write-xml-to-a-file
 
 import java.io.FileOutputStream;

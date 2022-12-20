@@ -1,4 +1,4 @@
-package space.wuwei.cius.utils;
+package wuwei.japan_core.cius;
 
 import java.util.List;
 

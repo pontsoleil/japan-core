@@ -1,4 +1,4 @@
-package space.wuwei.cius.utils;
+package wuwei.japan_core.cius;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -14,6 +14,8 @@ import javax.xml.transform.TransformerException;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+
+import wuwei.japan_core.utils.WriteXmlDom;
 
 public class Csv2Invoice {
 	static String OUT_XML                   = "data/xml/Example1_out.xml";

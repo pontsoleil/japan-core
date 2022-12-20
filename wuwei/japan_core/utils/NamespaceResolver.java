@@ -1,4 +1,4 @@
-package space.wuwei.cius.utils;
+package wuwei.japan_core.utils;
 //https://howtodoinjava.com/java/xml/xpath-namespace-resolution-example/
 
 import java.util.Iterator;

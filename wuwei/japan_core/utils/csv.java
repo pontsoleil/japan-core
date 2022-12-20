@@ -1,4 +1,4 @@
-package space.wuwei.csv;
+package wuwei.japan_core.utils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -12,7 +12,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
-public class IO {
+public class csv {
 	public static ArrayList<String> columns         = new ArrayList<>();
 	public static ArrayList<ArrayList<String>> data = new ArrayList<>();
 

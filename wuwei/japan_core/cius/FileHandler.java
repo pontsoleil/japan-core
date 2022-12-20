@@ -1,4 +1,4 @@
-package space.wuwei.cius.utils;
+package wuwei.japan_core.cius;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -41,7 +41,8 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import space.wuwei.csv.IO;
+import wuwei.japan_core.utils.csv;
+import wuwei.japan_core.utils.NamespaceResolver;
 
 public class FileHandler {
 	static String JP_PINT_CSV                      = "data/base/jp_pint.csv";
@@ -698,7 +699,7 @@ public class FileHandler {
 			data.add(row);
 		}
 		
-		IO.writeCSV(fileOutputStream, data, charset);
+		csv.writeCSV(fileOutputStream, data, charset);
 
         fileOutputStream.close();
 	}
@@ -713,7 +714,7 @@ public class FileHandler {
 		System.out.println("-- FileHandler.csvFileRead " + filename + " " + charset);
 		FileInputStream fileInputStream = new FileInputStream(filename);
 		
-		ArrayList<ArrayList<String>> data = IO.read(fileInputStream, charset);
+		ArrayList<ArrayList<String>> data = csv.read(fileInputStream, charset);
 		
 		// header
 		header = new ArrayList<String>();
