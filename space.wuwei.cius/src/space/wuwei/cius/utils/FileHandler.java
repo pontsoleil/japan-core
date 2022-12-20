@@ -438,7 +438,7 @@ public class FileHandler {
 			System.out.println("- FileHaldler.getElements parent null");
 			return null;
 		}
-		if (id.matches("^ibt-[0-9]+$")) {
+		if (id.toLowerCase().matches("^ibt-.+$")) {
 			xpath += "/text()";
 		}
 		List<Node> nodes = xpathEvaluate(parent, xpath);
@@ -500,7 +500,7 @@ public class FileHandler {
 		}
 		child_xpath = child_xpath.replace("/Invoice/", "/*/");
 		child_xpath = child_xpath.replace("/ubl:Invoice/", "/*/");
-		if (childID.matches("^ibt-.*$") && ! "String".equals(child_datatype)) {
+		if (childID.toLowerCase().matches("^ibt-.*$") && ! "String".equals(child_datatype)) {
 			child_xpath += "/text()";
 		}
 		return child_xpath;
@@ -606,18 +606,22 @@ public class FileHandler {
 			String value, 
 			HashMap<String, String> attrMap ) {
 		if (null==parent) {
-			System.out.println("- FileHaldler.appendElementNS "+prefix+":"+qname+" parent is NULL");
+			System.out.println("- FileHaldler.appendElementNS parent "+prefix+":"+qname+" is NULL return");
 			return null;
 		}
 		try {
 			if ("@".equals(qname.substring(0,1))) {
 				String attrName = qname.substring(1, qname.length());
+				
 				Attr attribute = doc.createAttribute(attrName);
+				
 				attribute.setValue(value);
 				parent.setAttributeNode(attribute);
 				return parent;
 			} else {
+				
 				Element element = doc.createElementNS(nsURI, qname);
+				
 				element.setPrefix(prefix); // Set the desired namespace and prefix
 				if (value!="") {
 					element.setTextContent(value);					
