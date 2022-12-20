@@ -1,16 +1,12 @@
 package space.wuwei.cius.utils;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,46 +40,47 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-//import org.w3c.dom.NodeList;
-//import org.w3c.dom.List<Node>;
+
+import space.wuwei.csv.IO;
 
 public class FileHandler {
-	static String JP_PINT_CSV = "data/base/jp_pint.csv";
-	static String JP_PINT_XML_SKELTON = "data/base/jp_pint_skeleton.xml";
+	static String JP_PINT_CSV                      = "data/base/jp_pint.csv";
+	static String JP_PINT_XML_SKELTON              = "data/base/jp_pint_skeleton.xml";
 	
-	public static Document doc = null;
-	public static XPath xpath = null;
-	public static Element root = null;
-	public static String ROOT_ID = "ibg-00";
-	public static String[] MULTIPLE_ID = {"ibg-20", "ibg-21", "ibg-23", "ibg-25","ibg-27", "ibg-28"};
+	public static Document doc                     = null;
+	public static XPath xpath                      = null;
+	public static Element root                     = null;
+	public static String ROOT_ID                   = "ibg-00";
+	public static String[] MULTIPLE_ID             = {"ibg-20", "ibg-21", "ibg-23", "ibg-25","ibg-27", "ibg-28"};
 	public static HashMap<String, String> nsURIMap = null;
 	
-	public static ArrayList<String> header = new ArrayList<>();
+	public static ArrayList<String> header         = new ArrayList<>();
     public static ArrayList<ArrayList<String>> tidyData = new ArrayList<>();
     
 	public static Map<
-		String/* id */,
-		Binding> bindingDict = new HashMap<>();
+		String/*id*/,
+		Binding> bindingDict                       = new HashMap<>();
 	public static TreeMap<
-		Integer/* semSort */, 
-		Binding> semBindingMap = new TreeMap<>();
+		Integer/*semSort*/, 
+		Binding> semBindingMap                     = new TreeMap<>();
 	static TreeMap<
-		Integer/* synSort */, 
-		Binding> synBindingMap = new TreeMap<>();
+		Integer/*synSort*/, 
+		Binding> synBindingMap                     = new TreeMap<>();
 	public static TreeMap<
-		Integer/* parent semSort */, 
-		ArrayList<Integer/* child semSort */>> childMap = new TreeMap<>();
+		Integer/*parent semSort*/, 
+		ArrayList<Integer/*child semSort*/>> childMap = new TreeMap<>();
 	public static TreeMap<
-		Integer/* child semSort */, 
-		Integer/* parent semSort */> parentMap = new TreeMap<>();
+		Integer/*child semSort*/, 
+		Integer/*parent semSort*/> parentMap       = new TreeMap<>();
 	public static TreeMap<
-    	Integer/* semSort */, 
-    	String/* id */> multipleMap = new TreeMap<>();
+    	Integer/*semSort*/, 
+    	String/*id*/> multipleMap                  = new TreeMap<>();
     public static TreeMap<
-    	Integer/* semSort */, 
-    	ParsedNode> nodeMap = new TreeMap<>();
+    	Integer/*semSort*/, 
+    	ParsedNode> nodeMap                        = new TreeMap<>();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) 
+    {
     	String IN_XML = "data/xml/Example1.xml";
     	
 		parseBinding();
@@ -202,7 +199,8 @@ public class FileHandler {
 	    
     }
     
-	public static void parseBinding() {
+	public static void parseBinding() 
+	{
 		System.out.println("-- parseBinding");
 		try (BufferedReader fileReader = new BufferedReader(new FileReader(JP_PINT_CSV)))
 		{
@@ -348,7 +346,8 @@ public class FileHandler {
 //		return count;
 //	}
 	
-	public static Document parseInvoice(String xmlfile) {
+	public static Document parseInvoice(String xmlfile) 
+	{
 		try {
 		    //Build DOM
 		    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -380,7 +379,8 @@ public class FileHandler {
 		}		
 	}
 	
-	public static void parseSkeleton() {
+	public static void parseSkeleton() 
+	{
 		String skeleton = JP_PINT_XML_SKELTON;
 		try {
 		    //Build DOM
@@ -414,7 +414,8 @@ public class FileHandler {
 		}
 	}
 	
-	public static TreeMap<Integer, String> getNodeValues(String id) {
+	public static TreeMap<Integer, String> getNodeValues(String id) 
+	{
 		TreeMap<Integer, String> nodeValueMap = new TreeMap<>();
 		Binding binding = bindingDict.get(id);
 		Integer sort = binding.getSemSort();
@@ -429,7 +430,8 @@ public class FileHandler {
 		return nodeValueMap;
 	}
 	
-	public static List<Node> getElements(Element parent, String id) {
+	public static List<Node> getElements(Element parent, String id) 
+	{
 		Binding binding = (Binding) bindingDict.get(id);
 		String xpath = binding.getXPath();
 		xpath = xpath.replaceAll("/Invoice", "/*");
@@ -445,7 +447,8 @@ public class FileHandler {
 		return nodes;
 	}
 	
-	public static List<Node> getXPath(Element parent, String xpath) {
+	public static List<Node> getXPath(Element parent, String xpath) 
+	{
 //		System.out.println("-- getXPath "+xpath);
 		xpath = xpath.replaceAll("/Invoice/", "/*/");
 		if (null==parent) {
@@ -456,7 +459,8 @@ public class FileHandler {
 		return nodes;
 	}
 
-	public static TreeMap<Integer, List<Node>> getChildren(Node e, String id) {
+	public static TreeMap<Integer, List<Node>> getChildren(Node e, String id) 
+	{
 		TreeMap<Integer, List<Node>> childList = new TreeMap<>();	
 		Binding binding = (Binding) bindingDict.get(id);
 		Integer semSort = binding.getSemSort();
@@ -494,7 +498,12 @@ public class FileHandler {
 		return childList;
 	}
 
-	private static String checkChildXPath(String xpath, String childID, String child_datatype, String child_xpath) {
+	private static String checkChildXPath(
+			String xpath, 
+			String childID, 
+			String child_datatype, 
+			String child_xpath ) 
+	{
 		if (! xpath.equals("/Invoice") && ! xpath.equals("/ubl:Invoice")) {
 			child_xpath = child_xpath.replace(xpath, ".");
 		}
@@ -506,7 +515,10 @@ public class FileHandler {
 		return child_xpath;
 	}
 
-	public static List<Node> xpathEvaluate(Node base, String xPath) {
+	public static List<Node> xpathEvaluate(
+			Node base, 
+			String xPath ) 
+	{
 		XPathExpression expr = null;
 		NodeList result;
 		List<Node> nodeList = new ArrayList<>();
@@ -541,13 +553,15 @@ public class FileHandler {
 	}
 	
 	// https://stackoverflow.com/questions/19589231/can-i-iterate-through-a-nodelist-using-for-each-in-java
-	public static List<Node> asList(NodeList n) {	    
+	public static List<Node> asList(NodeList n) 
+	{	    
 		return n.getLength()==0
 				? Collections.<Node>emptyList()
 				: new NodeListWrapper(n);
 	}
 	static final class NodeListWrapper extends AbstractList<Node>	  
-	implements RandomAccess {	    
+	implements RandomAccess 
+	{	    
 		private final NodeList list;
 	    NodeListWrapper(NodeList l) {
 	      list=l;
@@ -560,7 +574,8 @@ public class FileHandler {
 	    }
 	}
 	 
-	public static String extractSelector(String xPath) {
+	public static String extractSelector(String xPath) 
+	{
 		int start = xPath.indexOf("[");
 		int last = xPath.lastIndexOf("]");
 		String selector = "";
@@ -570,7 +585,8 @@ public class FileHandler {
 		return selector;
 	}
 	
-	public static String stripSelector(String path) {
+	public static String stripSelector(String path) 
+	{
 		int start = path.indexOf("[");
 		int last = path.lastIndexOf("]");
 		if (start >= 0) {
@@ -579,7 +595,8 @@ public class FileHandler {
 		return path;
 	}
 	
-	public static String resumeSelector(String strippedPath, String path) {
+	public static String resumeSelector(String strippedPath, String path) 
+	{
 		String resumedPath = strippedPath;
 		if (strippedPath.indexOf("cac:AllowanceCharge") >= 0) {
 			int start = path.indexOf("[");
@@ -604,7 +621,8 @@ public class FileHandler {
 			String prefix, 
 			String qname, 
 			String value, 
-			HashMap<String, String> attrMap ) {
+			HashMap<String, String> attrMap ) 
+	{
 		if (null==parent) {
 			System.out.println("- FileHaldler.appendElementNS parent "+prefix+":"+qname+" is NULL return");
 			return null;
@@ -644,12 +662,15 @@ public class FileHandler {
 		}
 	}
 	
-	public static void writeXML(Document doc, String filename)
-			throws
+	public static void writeXML(
+			Document doc, 
+			String filename )
+		throws
 			FileNotFoundException,
 			TransformerException,
 			TransformerFactoryConfigurationError,
-			IOException {
+			IOException 
+	{
 	    TransformerFactory transformerFactory = TransformerFactory.newInstance();
 	    Transformer transformer = transformerFactory.newTransformer();
 	    DOMSource source = new DOMSource(doc);
@@ -660,56 +681,53 @@ public class FileHandler {
 		transformer.transform(source, result);
 	}
 
-	public static void csvFileWrite(String filename, String charset)
-			throws
+	public static void csvFileWrite(
+			String filename, 
+			String charset )
+		throws
 			FileNotFoundException,
-			IOException {
+			IOException 
+	{
 		System.out.println("- FileHandler.csvFileWrite " + filename + " " + charset);
-		FileOutputStream fo = new FileOutputStream(filename);
-		Charset cs = Charset.forName(charset);
-		OutputStreamWriter osw = new OutputStreamWriter(fo, cs);
-		BufferedWriter bw = new BufferedWriter(osw);
+		FileOutputStream fileOutputStream = new FileOutputStream(filename);
+		ArrayList<ArrayList<String>> data = new ArrayList<>();	
 		// header
-		String headerLine = String.join("\t", header);
-		bw.write(headerLine);
-        bw.write("\n");
-        // data
-        for(int i=0; i < tidyData.size(); i++) {
-        	String line = String.join("\t", tidyData.get(i));
-            bw.write(line);
-            bw.write("\n");
-        }
-        bw.close();
+		data.add(header);
+		// data
+		for (ArrayList<String> row : tidyData) {
+			data.add(row);
+		}
+		
+		IO.writeCSV(fileOutputStream, data, charset);
+
+        fileOutputStream.close();
 	}
 
-	public static void csvFileRead(String filename, String charset)
-			throws
+	public static void csvFileRead(
+			String filename, 
+			String charset )
+		throws
 			FileNotFoundException,
-			IOException {
+			IOException 
+	{
 		System.out.println("-- FileHandler.csvFileRead " + filename + " " + charset);
-		header = new ArrayList<String>();
-		tidyData = new ArrayList<ArrayList<String>>();
-		FileInputStream fi = new FileInputStream(filename);
-		Charset cs = Charset.forName(charset);
-		InputStreamReader isw = new InputStreamReader(fi, cs);
-		BufferedReader br = new BufferedReader(isw);
+		FileInputStream fileInputStream = new FileInputStream(filename);
+		
+		ArrayList<ArrayList<String>> data = IO.read(fileInputStream, charset);
+		
 		// header
-		String headerLine = br.readLine();
-		String[] fields = headerLine.split("\t");
+		header = new ArrayList<String>();
+		ArrayList<String> fields = data.get(0);//headerLine.split("\t");
 		for (String field : fields) {
 			header.add(field);
 		}
 		// data
-		String line;		
-		while ((line = br.readLine()) != null) {
-			fields = line.split("\t");
-			ArrayList<String> record = new ArrayList<String>();
-			for (String field : fields) {
-				record.add(field);
-			}
-			tidyData.add(record);
+		tidyData = new ArrayList<ArrayList<String>>();
+		for (int i = 1; i < data.size(); i++) {
+			fields = data.get(i);
+			tidyData.add(fields);
 		}
-        br.close();
+        fileInputStream.close();
 	}
 
 }

@@ -16,17 +16,18 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 public class Csv2Invoice {
-	static String OUT_XML = "data/xml/Example1_out.xml";
-	static String IN_CSV = "data/csv/Example1.csv";
-	static String CHARSET = "UTF-8";
+	static String OUT_XML                   = "data/xml/Example1_out.xml";
+	static String IN_CSV                    = "data/csv/Example1.csv";
+	static String CHARSET                   = "UTF-8";
 	static String DOCUMENT_CURRENCY_CODE_ID = "ibt-005";
-	static String TAX_CURRENCY_CODE_ID = "ibt-006";
+	static String TAX_CURRENCY_CODE_ID      = "ibt-006";
 	
     // CSV records
     static TreeMap<Integer, String> rowMap = new TreeMap<>();
     static TreeMap<String, TreeMap<Integer, String>> rowMapList = new TreeMap<>();
  	
-    static class DataValue {
+    static class DataValue 
+    {
     	public Integer seq;
  		public Integer sort;
  		public String xPath;
@@ -38,7 +39,8 @@ public class Csv2Invoice {
  				Integer sort, 
  				String xPath, 
  				String value, 
- 				HashMap<String,String> attributes) {
+ 				HashMap<String,String> attributes) 
+ 		{
  			this.seq = seq;
  			this.sort = sort;
  			this.xPath = xPath;
@@ -47,7 +49,8 @@ public class Csv2Invoice {
  		}
     }
     
- 	static class PathValue {
+ 	static class PathValue 
+ 	{
  		public String xPath;
  		public String value;
 
@@ -59,7 +62,8 @@ public class Csv2Invoice {
  	static PathValue documentCurrencyCode = new PathValue(null, null);
  	static PathValue taxCurrencyCode = new PathValue(null, null);
    
-	public static void main(String[] args) {
+	public static void main(String[] args) 
+	{
 //		processCSV("data/csv/Example1.csv", "data/xml/Example1_out.xml");
 //		processCSV("data/csv/Example2-TaxAcctCur.csv","data/xml/Example2-TaxAcctCur_out.xml");
 //		processCSV("data/csv/Example3-SumInv1.csv","data/xml/Example3-SumInv1_out.xml");
@@ -72,8 +76,8 @@ public class Csv2Invoice {
 		System.out.println("** END **");
 	}
 	
-	public static void processCSV(String in_csv, String out_xml) {
-		
+	public static void processCSV(String in_csv, String out_xml) 
+	{	
 		FileHandler.parseBinding();
 		
 		try {
@@ -127,7 +131,6 @@ public class Csv2Invoice {
 			rowMapList.put(key, rowMap);
 		}
 		
-//		Element boughElement = null;
 		Integer boughSort = null;
 		Integer boughSeq = null;
 		String id = null;
@@ -141,11 +144,9 @@ public class Csv2Invoice {
 		for (Map.Entry<String, TreeMap<Integer, String>> rowMap : rowMapList.entrySet()) {
 			String key = rowMap.getKey();
 			TreeMap<Integer, String> row = rowMapList.get(key);
-			int j = 0;
 			for (Integer synSort : row.keySet()) {
 				Binding binding = FileHandler.synBindingMap.get(synSort);
 				id = binding.getID();
-				int idx = FileHandler.header.indexOf(id);
 				idMap.put(synSort, id);
 			}
 			n++;
@@ -159,12 +160,12 @@ public class Csv2Invoice {
 		for (Map.Entry<String, TreeMap<Integer, String>> rowMap : rowMapList.entrySet()) {
 			String key = rowMap.getKey();
 			String[] boughs = key.split(",");
-			String bough = boughs[boughs.length-1];
-			String[] data = bough.split(" ");
-			String ds = data[data.length-1];
-			String[] d = ds.split("=");
+			String bough    = boughs[boughs.length-1];
+			String[] data   = bough.split(" ");
+			String ds       = data[data.length-1];
+			String[] d      = ds.split("=");
 			boughSort = Integer.parseInt(d[0]);
-			boughSeq = Integer.parseInt(d[1]);
+			boughSeq  = Integer.parseInt(d[1]);
 			TreeMap<Integer, String> row = rowMapList.get(key);
 			for (Integer synSort : row.keySet()) {
 				value = row.get(synSort);
@@ -196,56 +197,15 @@ public class Csv2Invoice {
 	    	for (int x = 0; x < row_size; x++) {
 	        	DataValue dataValue = dataRedords[x][y];
 	        	if (null != dataValue) {
-		        	boughSeq = dataValue.seq;
-		        	boughSort = dataValue.sort;
-		        	xPath = dataValue.xPath;
-		        	value = dataValue.value;
+		        	boughSeq   = dataValue.seq;
+		        	boughSort  = dataValue.sort;
+		        	xPath      = dataValue.xPath;
+		        	value      = dataValue.value;
 		        	attributes = dataValue.attributes;
 					appendElementNS(boughSeq, boughSort, xPath, value, attributes);
 	        	}
 	        }
 	    }
-
-//		for (Map.Entry<String, TreeMap<Integer, String>> rowMap : rowMapList.entrySet()) {
-//			String bough = rowMap.getKey();
-//			TreeMap<Integer, String> row = rowMapList.get(bough);
-//			for (Integer synSort : row.keySet()) {
-//				value = row.get(synSort);
-//				TreeMap<String/*bough*/,String> transposedRow1= new TreeMap<>();
-//				if (transposedMapList.containsKey(synSort)) {
-//					transposedRow1 = transposedMapList.get(synSort);
-//				}
-//				transposedRow1.put(bough, value);
-//				transposedMapList.put(synSort, transposedRow);
-//			}
-//		}
-//		
-//		for (Map.Entry<Integer, TreeMap<String, String>> transposedMap : transposedMapList.entrySet()) {
-//			Integer synSort = transposedMap.getKey();
-//			TreeMap<String/*bough*/,String> transposedRow1 = transposedMap.getValue();
-//			for (String bough : transposedRow1.keySet()) {
-//				String[] data = bough.split(" ");
-//				String[] d = data[data.length-1].split("=");
-//				boughSort = Integer.parseInt(d[0]);
-//				boughSeq = Integer.parseInt(d[1]);
-//				value = transposedRow1.get(bough);
-//				Binding binding = FileHandler.synBindingMap.get(synSort);
-//				xPath = binding.getXPath();
-//				HashMap<String,String> attributes = new HashMap<>();
-//				String datatype = binding.getDatatype();
-//				if ("Amount".equals(datatype) || "Unit Price Amount".equals(datatype)) {
-//					if (xPath.length() > 0) {
-//						if (null!=taxCurrencyCode.xPath && xPath.indexOf(taxCurrencyCode.xPath)>=0) {
-//							attributes.put("currencyID", taxCurrencyCode.value);
-//						} else {
-//							attributes.put("currencyID", documentCurrencyCode.value);
-//						}
-//					}
-//				}
-//				appendElementNS(boughSeq, boughSort, xPath, value, attributes);
-////				levelElement = new LevelElement(boughSeq, boughSort, xPath, element);				
-//			}
-//		}
 
 		try (FileOutputStream output = new FileOutputStream(out_xml)) {
 			WriteXmlDom.writeXml(FileHandler.doc, output);
@@ -263,15 +223,16 @@ public class Csv2Invoice {
 			Integer boughSort, 
 			String xPath,
 			String value, 
-			HashMap<String,String> attributes) {
+			HashMap<String,String> attributes) 
+	{
 		if (']'==xPath.charAt(xPath.length()-1)) {
 			return null;
 		}
 		value = value.trim();
 		if (value.length() > 0) {
-			System.out.println("* appendElementNS " + boughSort + "=" + boughSeq + " " + xPath +"=" + value);
+			System.out.println("* appendElementNS "+boughSort+"="+boughSeq+" "+xPath +"="+value);
 		} else {
-			System.out.println("* appendElementNS " + boughSort + "=" + boughSeq + " " + xPath);
+			System.out.println("* appendElementNS "+boughSort+"="+boughSeq+" "+xPath);
 		}
 		ArrayList<String> paths = splitPath(xPath);
 		int depth = paths.size();
@@ -319,15 +280,16 @@ public class Csv2Invoice {
 	}
 	
 	private static Element fillLevelElement (
-			int n, 
-			int depth,
+			int     n, 
+			int     depth,
 			Element parent, 
-			String path, 
-			int boughLevel, 
+			String  path, 
+			int     boughLevel, 
 			Integer boughSort, 
 			Integer boughSeq,
-			String value,
-			HashMap<String,String> attributes ) {
+			String  value,
+			HashMap<String,String> attributes ) 
+	{
 		if (null==parent) {
 			System.out.println("- fillLevelElement parent is NULL use root");
 			parent = FileHandler.root;
@@ -372,7 +334,14 @@ public class Csv2Invoice {
 		return element;
 	}
 
-	private static void defineSelector(Element element, String selector, Integer boughSort, Integer boughSeq, int n, int depth) {
+	private static void defineSelector(
+			Element element, 
+			String selector, 
+			Integer boughSort, 
+			Integer boughSeq, 
+			int n, 
+			int depth ) 
+	{
 		if (0==selector.length()) {
 			return;
 		}
@@ -409,7 +378,8 @@ public class Csv2Invoice {
 			String value, 
 			HashMap<String,String> attributes, 
 			int level,
-			int depth ) {
+			int depth ) 
+	{
 		Element element = null;
 		String cacValue = "";
 		HashMap<String,String> cacAttributes = null;
@@ -438,14 +408,15 @@ public class Csv2Invoice {
 		}
 	}
 
-	private static ArrayList<String> splitPath (String xPath ) {
+	private static ArrayList<String> splitPath (String xPath ) 
+	{
 		int start = xPath.indexOf("[");
 		int last = xPath.lastIndexOf("]");
 		String xPath1 = "";
 		if (start >= 0) {
 			String selector = xPath.substring(start, last+1);
 			selector = selector.replaceAll("/","_");
-			xPath1 = xPath.substring(0, start) + selector + xPath.substring(last+1,xPath.length());		
+			xPath1 = xPath.substring(0, start)+selector+xPath.substring(last+1,xPath.length());		
 		} else {
 			xPath1 = xPath;
 		}

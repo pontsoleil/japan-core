@@ -1,4 +1,4 @@
-package test.csv;
+package space.wuwei.csv;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -11,59 +11,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.TreeMap;
 
-import javax.xml.xpath.XPath;
+public class IO {
+	public static ArrayList<String> columns         = new ArrayList<>();
+	public static ArrayList<ArrayList<String>> data = new ArrayList<>();
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
-import space.wuwei.cius.utils.Binding;
-import space.wuwei.cius.utils.ParsedNode;
-
-public class TestReadWrite {
-	static String JP_PINT_CSV = "data/base/jp_pint.csv";
-	static String JP_PINT_XML_SKELTON = "data/base/jp_pint_skeleton.xml";
-	
-	public static Document doc = null;
-	public static XPath xpath = null;
-	public static Element root = null;
-	public static String ROOT_ID = "ibg-00";
-	public static String[] MULTIPLE_ID = {"ibg-20", "ibg-21", "ibg-23", "ibg-25","ibg-27", "ibg-28"};
-	public static HashMap<String, String> nsURIMap = null;
-	
-	public static ArrayList<String> header = new ArrayList<>();
-    public static ArrayList<ArrayList<String>> tidyData = new ArrayList<>();
-    
-	public static Map<
-		String/* id */,
-		Binding> bindingDict = new HashMap<>();
-	public static TreeMap<
-		Integer/* semSort */, 
-		Binding> semBindingMap = new TreeMap<>();
-	static TreeMap<
-		Integer/* synSort */, 
-		Binding> synBindingMap = new TreeMap<>();
-	public static TreeMap<
-		Integer/* parent semSort */, 
-		ArrayList<Integer/* child semSort */>> childMap = new TreeMap<>();
-	public static TreeMap<
-		Integer/* child semSort */, 
-		Integer/* parent semSort */> parentMap = new TreeMap<>();
-	public static TreeMap<
-    	Integer/* semSort */, 
-    	String/* id */> multipleMap = new TreeMap<>();
-    public static TreeMap<
-    	Integer/* semSort */, 
-    	ParsedNode> nodeMap = new TreeMap<>();
-    
-	public static LinkedList<String> columns = new LinkedList<>();
-	public static LinkedList<LinkedList<String>> data = new LinkedList<>();
-
-    public static void main(String[] args) {
+    public static void main(String[] args) 
+    {
     	String IN_CSV = "data/csv/Example.csv";
     	String OUT_CSV = "data/csv/Example_out.csv";
 
@@ -95,68 +49,82 @@ public class TestReadWrite {
 		}
     }
     
-	public static void csvFileWrite(String filename, String charset) throws FileNotFoundException, IOException {
+	public static void csvFileWrite(
+			String filename, 
+			String charset ) 
+		throws 
+			FileNotFoundException, 
+			IOException 
+	{
 		System.out.println("- csvFileWrite " + filename + " " + charset);
-		FileOutputStream fo = new FileOutputStream(filename);
-		Charset cs = Charset.forName(charset);
-		OutputStreamWriter osw = new OutputStreamWriter(fo, cs);
-		BufferedWriter bw = new BufferedWriter(osw);
+		FileOutputStream fileOutputStream     = new FileOutputStream(filename);
 
 		// data
-		for (LinkedList<String> columns : data) {
+		writeCSV(fileOutputStream,data,charset);
+		
+		fileOutputStream.close();
+	}
+
+	public static void writeCSV(
+			FileOutputStream fileOutputStream,
+			ArrayList<ArrayList<String>> data,
+			String charset ) 
+		throws IOException 
+	{
+		Charset cs                            = Charset.forName(charset);
+		OutputStreamWriter outputStreamwriter = new OutputStreamWriter(fileOutputStream, cs);
+		BufferedWriter bufferedWriter         = new BufferedWriter(outputStreamwriter);
+		for (ArrayList<String> columns : data) {
 			for (int i=0; i < columns.size(); i++) {
 				String cell_value = columns.get(i);
 				if (cell_value.indexOf("\"") != -1 || cell_value.indexOf(",") != -1) {
 					cell_value = "\"" + cell_value.replaceAll("\"", "\"\"") + "\"";
 				}
-				bw.write(cell_value);
+				bufferedWriter.write(cell_value);
 				if (i < columns.size() - 1) {
-					bw.write(",");
+					bufferedWriter.write(",");
 				}
 			}
-			bw.write("\n");
+			bufferedWriter.write("\n");
 		}
-		bw.close();
 	}
 
 	public static void csvFileRead(
 			String filename, 
 			String charset )
-			throws
+		throws
 			FileNotFoundException,
 			IOException
 	{
 		System.out.println("-- csvFileRead " + filename + " " + charset);
-		header = new ArrayList<String>();
-		tidyData = new ArrayList<ArrayList<String>>();
 		FileInputStream fi = new FileInputStream(filename);
 		
-		read(fi,charset);
+		data = read(fi,charset);
 		
         fi.close();
 	}
 
-	
-	
 	// http://endeavour.cocolog-nifty.com/developer_room/2008/06/javacsv_793b.html
 	//------------------------------------------------------------------
 	/**
 	 * CSVファイルの読み込み。
 	 * @param stream 入力ストリーム。FileInputStream，ByteArrayInputStreamなど。
+	 * @param charser 文字コードセット
+	 * @return data ２次元のArrayList
 	 */
-	public static void read(
-			InputStream stream, 
+	public static ArrayList<ArrayList<String>> read(
+			InputStream stream,
 			String charset )
 	{
-		InputStreamReader reader = null;
-		BufferedReader buff = null;
+		InputStreamReader inputSteramReader = null;
+		BufferedReader bufferedReader = null;
 		try {
 			Charset cs = Charset.forName(charset);
-			reader = new InputStreamReader(stream, cs);
-			buff = new BufferedReader(reader);
+			inputSteramReader = new InputStreamReader(stream, cs);
+			bufferedReader    = new BufferedReader(inputSteramReader);
 			String record;
 			int lineNum = 0;
-			while ((record = buildRecord(buff)) != null) {
+			while ((record = buildRecord(bufferedReader)) != null) {
 				lineNum++;
 				if (record.length() <= 0)
 					continue;
@@ -175,22 +143,24 @@ public class TestReadWrite {
 				System.out.println("");
 				data.add(columns);
 			}
+			return data;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
 			columns.clear();
 			try {
-				if (buff != null) {
-					buff.close();
+				if (bufferedReader != null) {
+					bufferedReader.close();
 				}
-				if (reader != null) {
-					reader.close();
+				if (inputSteramReader != null) {
+					inputSteramReader.close();
 				}
 				stream.close();
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			}
 		}
+		return data;
 	}
 
 	/**
@@ -219,9 +189,9 @@ public class TestReadWrite {
 		String result = reader.readLine();
 		int pos;
 		if (result != null && 0 < result.length() && 0 <= (pos = result.indexOf("\""))) {
-			boolean inString = true;
-			String rawline = result;
-			String newline = null;
+			boolean inString  = true;
+			String rawline    = result;
+			String newline    = null;
 			StringBuffer buff = new StringBuffer(1024);
 			while (true) {
 				while (0 <= (pos = rawline.indexOf("\"", ++pos))) {
@@ -230,7 +200,7 @@ public class TestReadWrite {
 				if (inString && (newline = reader.readLine()) != null) {
 					buff.append(rawline);
 					buff.append("\n");
-					pos = -1;
+					pos     = -1;
 					rawline = newline;
 					continue;
 				} else {
@@ -268,34 +238,34 @@ public class TestReadWrite {
 	 * @param src  1レコード分のテキストデータ。
 	 * @param dest フィールドの配列の出力先。
 	 */
-	public static LinkedList<String> splitRecord(String src) {
-		LinkedList<String> dest = new LinkedList<>();
-		String[] columns = src.split(",");
-		int maxlen = columns.length;
+	public static ArrayList<String> splitRecord(String src) {
+		ArrayList<String> dest = new ArrayList<>();
+		String[] columns       = src.split(",");
+		int maxlen             = columns.length;
+		StringBuffer buff      = new StringBuffer(1024);
 		int startPos, endPos, columnlen;
-		StringBuffer buff = new StringBuffer(1024);
 		String column;
 		boolean isInString, isEscaped;
 		for (int index = 0; index < maxlen; index++) {
 			column = columns[index];
 			if ((endPos = column.indexOf("\"")) < 0) {
-				dest.addLast(column);
+				dest.add(column);
 			} else {
 				isInString = (endPos == 0);
-				isEscaped = false;
-				columnlen = column.length();
+				isEscaped  = false;
+				columnlen  = column.length();
+				startPos   = (isInString) ? 1 : 0;
 				buff.setLength(0);
-				startPos = (isInString) ? 1 : 0;
 				while (startPos < columnlen) {
 					if (0 <= (endPos = column.indexOf("\"", startPos))) {
 						buff.append((startPos < endPos) ? column.substring(startPos, endPos) : isEscaped ? "\"" : "");
-						isEscaped = !isEscaped;
+						isEscaped  = !isEscaped;
 						isInString = !isInString;
-						startPos = ++endPos;
+						startPos   = ++endPos;
 					} else {
 						buff.append(column.substring(startPos));
 						if (isInString && index < maxlen - 1) {
-							column = columns[++index];
+							column    = columns[++index];
 							columnlen = column.length();
 							buff.append(",");
 							startPos = 0;
@@ -304,7 +274,7 @@ public class TestReadWrite {
 						}
 					}
 				}
-				dest.addLast(buff.toString());
+				dest.add(buff.toString());
 			}
 		}
 		return dest;
