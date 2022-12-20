@@ -116,28 +116,6 @@ public class TestReadWrite {
 			}
 			bw.write("\n");
 		}
-
-//		// header
-//		for (String cell_value : header) {
-//			if (cell_value.indexOf("\"") != -1 || cell_value.indexOf(",") != -1) {
-//			    cell_value = "\""+cell_value.replaceAll("\"", "\"\"")+"\"";
-//			}
-//		}
-//		String headerLine = String.join(",", header);
-//		bw.write(headerLine);
-//        bw.write("\n");
-//        // data
-//        for(int i=0; i < tidyData.size(); i++) {
-//        	ArrayList<String> row = tidyData.get(i);
-//    		for (String cell_value : row) {
-//    			if (cell_value.indexOf("\"") != -1 || cell_value.indexOf(",") != -1) {
-//    			    cell_value = "\""+cell_value.replaceAll("\"", "\"\"")+"\"";
-//    			}
-//    		}
-//        	String line = String.join(",", row);
-//            bw.write(line);
-//            bw.write("\n");
-//        }
 		bw.close();
 	}
 
