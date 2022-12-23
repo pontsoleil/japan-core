@@ -4,69 +4,93 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-// import java.util.Arrays;
-//import java.util.Iterator;
 import java.util.List;
-// import java.util.List;
 import java.util.Map;
-//import java.util.Map.Entry;
 import java.util.TreeMap;
 
-//import org.w3c.dom.Element;
-//import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
-//import org.w3c.dom.NodeList;
 
+/**
+ * x
+ *
+ */
 public class Invoice2csv {
 	static String IN_XML = "CIUS/data/xml/Example1.xml";
 	static String OUT_CSV = "CIUS/data/csv/Example1.csv";
 	static String CHARSET = "UTF-8";
-	// prepare CSV records
-    static TreeMap<Integer/* sort */,Integer/* seq */> boughMap = new TreeMap<>();
-    static ArrayList<TreeMap<Integer, Integer>> boughMapList = new ArrayList<>();
-    static TreeMap<Integer, String> rowMap = new TreeMap<>();
-    static TreeMap<String, TreeMap<Integer, String>> rowMapList = new TreeMap<>();
-    // semantic data
-	static TreeMap<Integer,String> dataMap = new TreeMap<>();
 
-	public static void main(String[] args) {
+	/**
+	 * Tidy dataテーブルの行を指定する索引データ
+	 */
+    static TreeMap<Integer/* sort */,Integer/* seq */> boughMap = new TreeMap<>();
+    /**
+     * Tidy dataテーブル全体についてのTidy dataテーブルの行を指定する索引データのリスト
+     */
+    static ArrayList<TreeMap<Integer, Integer>> boughMapList = new ArrayList<>();
+    /**
+     * Tidy dataテーブル作成用の2次元リストの行
+     */
+    static TreeMap<Integer, String> rowMap = new TreeMap<>();
+    /**
+     * Tidy dataテーブル作成用の2次元リスト　Tidy dataテーブルは、FileHandler/tidyData
+     */
+    static TreeMap<String, TreeMap<Integer, String>> rowMapList = new TreeMap<>();
+//    // semantic data
+//	static TreeMap<Integer,String> dataMap = new TreeMap<>();
+
+	/**
+	 * x
+	 * 
+	 * @param args
+	 */
+    public static void main(String[] args) {
 //		 processInvoice("CIUS/data/xml/Example0.xml", "CIUS/data/csv/Example0.csv");
 //		 processInvoice("CIUS/data/xml/Example1.xml", "CIUS/data/csv/Example1.csv");
 //		 processInvoice("CIUS/data/xml/Example2-TaxAcctCur.xml", "CIUS/data/csv/Example2-TaxAcctCur.csv");
-		 processInvoice("CIUS/data/xml/Example3-SumInv1.xml", "CIUS/data/csv/Example3-SumInv1.csv");
+		 processInvoice("CIUS/data/xml/Example3-0.xml", "CIUS/data/csv/Example3-0.csv");
+//		 processInvoice("CIUS/data/xml/Example3-SumInv1.xml", "CIUS/data/csv/Example3-SumInv1.csv");
 //		 processInvoice("CIUS/data/xml/Example4-SumInv2.xml", "CIUS/data/csv/Example4-SumInv2.xsv");
 //		 processInvoice("CIUS/data/xml/Example5-AllowanceCharge0.xml", "CIUS/data/csv/Example5-AllowanceCharge0.csv");
 //		 processInvoice("CIUS/data/xml/Example5-AllowanceCharge.xml", "CIUS/data/csv/Example5-AllowanceCharge.csv");
 //		 processInvoice("CIUS/data/xml/Example6-CorrInv.xml", "CIUS/data/csv/Example6-CorrInv.csv");
 //		 processInvoice("CIUS/data/xml/Example7-Return.Quan.xml", "CIUS/data/csv/Example7-Return.Quan.csv");
 //		 processInvoice("CIUS/data/xml/Example8-Return.ItPr.xml", "CIUS/data/csv/Example8-Return.ItPr.csv");
-		 System.out.println("** END **");
+		 System.out.println("** END Invoice2csv**");
 	}
 	
+	/**
+	 * を読み込んで Tidy dataテーブルに展開し、CSVファイルに出力する.
+	 * 
+	 * @param in_xml デジタルインボイス（XMLインスタンス文書）.
+	 * @param out_csv Tidy dataのCSV(RFC4180形式)ファイル.
+	 */
 	private static void processInvoice(String in_xml, String out_csv) {
 		System.out.println("\n** processInvoice("+in_xml+", "+out_csv+")");
 		
-	    boughMap = new TreeMap<Integer/* sort */,Integer/* seq */>();
+	    boughMap = new TreeMap<Integer/*sort*/,Integer/*seq*/>();
 	    boughMapList = new ArrayList<TreeMap<Integer, Integer>>();
 	    rowMap = new TreeMap<Integer, String>();
 	    rowMapList = new TreeMap<String, TreeMap<Integer, String>>();
 	
 	    FileHandler.parseBinding();
+	    
 		try {
-			FileHandler.doc = FileHandler.parseInvoice(in_xml);
+			FileHandler.parseInvoice(in_xml);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
 		}
-		FileHandler.parseDoc();
+		
+		FileHandler.nodeMap = FileHandler.parseDoc();
 	    
 		for (Map.Entry<String, Binding> entry : FileHandler.bindingDict.entrySet()) {
 			Binding binding = entry.getValue();
 			Integer sort = binding.getSemSort();
 			String id = binding.getID();
 			String card = binding.getCard();
-//			String xPath = binding.getXPath();
-			if (id.toLowerCase().matches("^ibg-.+$") && card.matches("^.*n$") && isMultiple(sort)) {
+			if (id.toLowerCase().matches("^ibg-.+$") &&
+					card.matches("^.*n$") &&
+					isMultiple(sort)) {
 				FileHandler.multipleMap.put(sort, id);
 			}
 		}
@@ -91,6 +115,9 @@ public class Invoice2csv {
 		System.out.println("-- END -- "+in_xml);
 	}
 	
+	/**
+	 * Tidy dataテーブル作成用の2次元リストrowMapListをTidy dataテーブル(FileHandler/tidyData)に変換する.
+	 */
 	private static void fillTable() {
 		FileHandler.tidyData = new ArrayList<ArrayList<String>>();
 		System.out.println();
@@ -100,7 +127,8 @@ public class Invoice2csv {
 		for (Map.Entry<Integer,String> multipleEntry : FileHandler.multipleMap.entrySet()) {
 			String multipleID = multipleEntry.getValue();
 			Binding multipleBinding = FileHandler.bindingDict.get(multipleID);
-			if (multipleID.toLowerCase().matches("^ibg-.+$") && multipleBinding.isUsed()) {
+			if (multipleID.toLowerCase().matches("^ibg-.+$") &&
+					multipleBinding.isUsed()) {
 				FileHandler.header.add(multipleID);
 			}
 		}
@@ -109,7 +137,10 @@ public class Invoice2csv {
 			Integer dataSort = dataEntry.getKey();
 			Binding dataBinding = dataEntry.getValue();
 			String dataID = dataBinding.getID();
-			if (1000!=dataSort && dataID.toLowerCase().matches("^ibt-.+$") && dataBinding.isUsed() && ! FileHandler.header.contains(dataID)) {
+			if (1000!=dataSort &&
+					dataID.toLowerCase().matches("^ibt-.+$") &&
+					dataBinding.isUsed() &&
+					! FileHandler.header.contains(dataID)) {
 				FileHandler.header.add(dataID);
 			}
 		}
@@ -154,32 +185,46 @@ public class Invoice2csv {
 		}
 	}
 
+	/**
+	 * 見つかった要素を Tidy dataテーブル作成用の2次元リストrowMapListに登録する.
+	 * 
+	 * @param semSort セマンティックモデルのセマンティックソート番号
+	 * @param value 要素の値
+	 * @param boughMap 
+	 */
 	private static void fillData (
-			Integer sort, 
+			Integer semSort, 
 			String value, 
 			TreeMap<Integer, Integer> boughMap ) {
-		Binding binding = (Binding) FileHandler.semBindingMap.get(sort);
+		Binding binding = (Binding) FileHandler.semBindingMap.get(semSort);
         String id = binding.getID();
 		String businessTerm = binding.getBT();
 		binding.setUsed(true);
 		value = value.trim();
-		System.out.println("- fill Data boughMap=" + boughMap.toString() + sort + "(" + id + ")" + businessTerm + "=" + value);
+		System.out.println("- 0 fill Data boughMap="+boughMap.toString()+id+"("+semSort+")"+businessTerm+"="+value);
 
 		String rowMapKey = "";
 		for (Map.Entry<Integer, Integer> entry : boughMap.entrySet()) {
 			Integer boughSort = entry.getKey();
 			Integer seq = entry.getValue();
-			rowMapKey += (boughSort + "=" + seq + " ");
+			rowMapKey += (boughSort+"="+seq+" ");
 		}
 		rowMap = new TreeMap<>();
 		rowMapKey = rowMapKey.trim();
 		if (rowMapList.containsKey(rowMapKey)) {
 			rowMap = rowMapList.get(rowMapKey);
 		}
-		rowMap.put(sort, value);
+		rowMap.put(semSort, value);
 		rowMapList.put(rowMapKey, rowMap);
 	}
 	
+	/**
+	 * デジタルインボイスのXMLインスタンス文書を読み込み、セマンティックモデルの階層定義に従って親要素から子要素のXPathを使用して探し出し、その値をTidy data定義用の2次元リストに設定する。
+	 * 
+	 * @param parent 親のXML要素
+	 * @param sort セマンティックモデル定義における親要素のセマンティックソート番号
+	 * @param boughMap　要素が定義されたTidy dataの行に対応する索引
+	 */
 	private static void fillGroup (
 			Node parent, 
 			Integer sort, 
@@ -191,22 +236,22 @@ public class Invoice2csv {
 		Binding binding = FileHandler.semBindingMap.get(sort);
 		String id = binding.getID();
 		String businessTerm = binding.getBT();
-//		String xPath = binding.getXPath();
 
 		TreeMap<Integer, List<Node>> childList = FileHandler.getChildren(parent, id);
 		
 		if (0==childList.size()) {
-			System.out.println("- fill Group boughMap=" + boughMap.toString() + sort + "(" + id + ")" + businessTerm + " is Empty" );
+			System.out.println("- 0 fill Group boughMap="+boughMap.toString()+id+"("+sort+")"+businessTerm+" is Empty" );
 			return;
 		}
    	
 		for (Integer childSort : childList.keySet()) {
+			// childList includes both #text and @attribute
 			Binding childBinding = (Binding) FileHandler.semBindingMap.get(childSort);
             String childID = childBinding.getID();
     		String childBusinessTerm = childBinding.getBT();
     		String childXPath = childBinding.getXPath();
     		int childLevel = Integer.parseInt(childBinding.getLevel());
-			System.out.println("- fill Group " + childSort + "(" + childID + ")" + childBusinessTerm + " " +  childXPath);
+			System.out.println("- 1 fill Group "+childID+"("+childSort+")"+childBusinessTerm+" "+childXPath);
           
             List<Node> children = childList.get(childSort);
             
@@ -215,9 +260,12 @@ public class Invoice2csv {
 	            for (int i = 0; i < countChildren; i++) {
 	            	Node child = children.get(i);
 		        	if (childID.toLowerCase().matches("^ibt-.+$")) {
-	        			String value = child.getTextContent().trim();
+	        			String value = null;
+	        			value = child.getTextContent().trim();
 		            	if (null != value && value.length() > 0) {
-	            			System.out.println("    child["+i+"]"+child.getNodeName()+"="+value);
+		            		if (! "#text".equals(child.getNodeName()))
+		            			continue; // @attribute has already registered as a grand child in the procedure below if clause.
+	            			System.out.println("* 1 fill Data child["+i+"]"+childID+"("+childSort+")"+child.getNodeName()+"="+value);
 		            		
 			            	fillData(childSort, value, boughMap);
 			            	
@@ -228,14 +276,15 @@ public class Invoice2csv {
 			        				String grandchildID = grandchildBiunding.getID();
 			        				String grandchildBT = grandchildBiunding.getBT();
 //			        				String grandchildXPath = grandchildBiunding.getXPath();
-				                	System.out.println("* fill Group "+childID+" boughMapList="+boughMapList.toString()+" boughMap" + boughMap.toString() + " grandchild(" + grandchildSort + ")"+grandchildID+" level=" + childLevel + " " +  childBusinessTerm + "->" + grandchildBT);
 				                	ParsedNode parsedNode = FileHandler.nodeMap.get(grandchildSort);
 				                	List<Node> grandchildNodes = parsedNode.nodes;
 				            		for (int j = 0; j < grandchildNodes.size(); j++) {
 				            			Node grandchild = grandchildNodes.get(j);
 				            			String grandchildName = grandchild.getNodeName();
 				        				String grandchildValue = grandchild.getTextContent().trim();
-				            			System.out.println("    grand child["+j+"]"+grandchildName+" "+grandchildValue);
+				            			System.out.println("* 2 fill Data boughMap"+boughMap.toString()+"child "+child.getNodeName()+" "+childID+
+				            					" grandchild("+grandchildSort+")"+grandchildID+" level="+childLevel+" "+ childBusinessTerm+"->"+grandchildBT);
+				            			System.out.println("    grand child["+j+"]"+grandchildName+"="+grandchildValue);
 
 				            			fillData(grandchildSort, grandchildValue, boughMap);
 				            		}
@@ -249,7 +298,7 @@ public class Invoice2csv {
 		                if (is_multiple && countChildren > 1) {
 		                	Integer lastkey = boughMap1.lastKey();
 		                	Integer lastvalue = boughMap1.get(lastkey);
-		                	System.out.print("    boughMap1 lastKey=" + lastkey + " child is multiple level=" + childLevel);
+		                	System.out.print("    boughMap1 lastKey="+lastkey+" child is multiple level="+childLevel);
 			            	if (childSort != lastkey) {
 			            		if (boughMap.size() < childLevel + 1) {
 			                		boughMap1.put(childSort, i);
@@ -263,9 +312,10 @@ public class Invoice2csv {
 			            		boughMap1.put(lastkey, lastvalue1);
 			            	}
 			            	boughMapList.add(boughMap1);
-			            	System.out.println(" UPDATED boughMapList=" + boughMapList.toString() + " boughMap1=" + boughMap1.toString());
+			            	System.out.println("    UPDATED boughMapList="+boughMapList.toString()+" boughMap1="+boughMap1.toString());
 		                }
-	                	System.out.println("* fill Group "+childID+" boughMapList="+boughMapList.toString()+" boughMap1" + boughMap1.toString() + " child(" + childSort + ") level=" + childLevel + " " +  businessTerm + "->" + childBusinessTerm);
+	                	System.out.println("* fill Group "+childID+" boughMapList="+boughMapList.toString()+" boughMap1"+boughMap1.toString()+
+	                			" child("+childSort+") level="+childLevel+" "+ businessTerm+"->"+childBusinessTerm);
 
 	                	fillGroup(child, childSort, boughMap1);
 		            }
@@ -274,9 +324,17 @@ public class Invoice2csv {
         }
 	}
 
-	private static boolean isMultiple(Integer sort) {
+	/**
+	 * セマンティックソート番号 semSortで指定された要素がXML DOM Documentに複数あるか判定する.<br>
+	 * なお、FileHandler.MULTIPLE_IDで指定された要素も、複数と判定する.
+	 * 
+	 * @param semSort セマンティックソート番号.
+	 * 
+	 * @return multiple 複数であればtrue.　存在しないか1件しかなければfalse.
+	 */
+	private static boolean isMultiple(Integer semSort) {
 		boolean multiple = false;
-		Binding binding = FileHandler.semBindingMap.get(sort);
+		Binding binding = FileHandler.semBindingMap.get(semSort);
 		String id = binding.getID();
 		String xPath = binding.getXPath();
 		xPath = FileHandler.stripSelector(xPath);

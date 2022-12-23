@@ -1,11 +1,11 @@
 package wuwei.japan_core.cius;
 
-import java.io.BufferedReader;
+//import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
+//import java.io.FileReader;
 import java.io.IOException;
 import java.util.AbstractList;
 import java.util.ArrayList;
@@ -41,9 +41,13 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import wuwei.japan_core.utils.csv;
+import wuwei.japan_core.utils.CSV;
 import wuwei.japan_core.utils.NamespaceResolver;
 
+/**
+ * x
+ *
+ */
 public class FileHandler {
 	static String JP_PINT_CSV                = "CIUS/data/base/jp_pint.csv";
 	static String JP_PINT_XML_SKELTON        = "CIUS/data/base/jp_pint_skeleton.xml";
@@ -55,37 +59,41 @@ public class FileHandler {
 	public static String[] MULTIPLE_ID       = {"ibg-20", "ibg-21", "ibg-23", "ibg-25","ibg-27", "ibg-28"};
 	public static HashMap<String, String> nsURIMap = null;
 	
+	/**
+	 * Tidy dataテーブルの見出し行
+	 */
 	public static ArrayList<String> header   = new ArrayList<>();
+	/**
+	 * Tidy dataテーブル
+	 */
     public static ArrayList<ArrayList<String>> tidyData = new ArrayList<>();
     
-	public static Map<
-		String/*id*/,
-		Binding> bindingDict                 = new HashMap<>();
-	public static TreeMap<
-		Integer/*semSort*/, 
-		Binding> semBindingMap               = new TreeMap<>();
-	static TreeMap<
-		Integer/*synSort*/, 
-		Binding> synBindingMap               = new TreeMap<>();
-	public static TreeMap<
-		Integer/*parent semSort*/, 
-		ArrayList<Integer/*child semSort*/>> childMap = new TreeMap<>();
-	public static TreeMap<
-		Integer/*child semSort*/, 
-		Integer/*parent semSort*/> parentMap = new TreeMap<>();
-	public static TreeMap<
-    	Integer/*semSort*/, 
-    	String/*id*/> multipleMap            = new TreeMap<>();
-    public static TreeMap<
-    	Integer/*semSort*/, 
-    	ParsedNode> nodeMap                  = new TreeMap<>();
+	public static Map<String/*id*/,	Binding> bindingDict =
+			new HashMap<>();
+	public static TreeMap<Integer/*semSort*/, Binding> semBindingMap =
+			new TreeMap<>();
+	static TreeMap<Integer/*synSort*/, Binding> synBindingMap =
+			new TreeMap<>();
+	public static TreeMap<Integer/*parent semSort*/, ArrayList<Integer/*child semSort*/>> childMap =
+			new TreeMap<>();
+	public static TreeMap<Integer/*child semSort*/, Integer/*parent semSort*/> parentMap =
+			new TreeMap<>();
+	public static TreeMap<Integer/*semSort*/, String/*id*/> multipleMap =
+			new TreeMap<>();
+    public static TreeMap<Integer/*semSort*/, ParsedNode> nodeMap =
+    		new TreeMap<>();
 
+    /**
+     * x
+     * 
+     * @param args
+     */
     public static void main(String[] args) 
     {
     	String IN_XML = "data/xml/Example1.xml";
     	
 		parseBinding();
-		doc = parseInvoice(IN_XML);
+		parseInvoice(IN_XML);
 		parseDoc();
 		
 		List<Node> nodes;
@@ -200,7 +208,13 @@ public class FileHandler {
 	    
     }
     
-	public static void parseBinding() 
+	/**
+	 * セマンティックモデル定義及びシンタクスバインディング定義シートを読み込み定義情報を次の広域変数に設定する。<br>
+	 * Map&lt;String(id),Binding> bindingDict<br>
+	 * TreeMap&lt;Integer(semSort), Binding> semBindingMap<br>
+	 * TreeMap&lt;Integer(synSort), Binding> synBindingMap
+	 */
+    public static void parseBinding() 
 	{
 		System.out.println("-- parseBinding");
 
@@ -209,7 +223,7 @@ public class FileHandler {
 		ArrayList<ArrayList<String>> binding_data = new ArrayList<>();
 		try {
 			FileInputStream fileInputStream = new FileInputStream(JP_PINT_CSV);
-			binding_data = csv.readFile(fileInputStream, "UTF-8");
+			binding_data = CSV.readFile(fileInputStream, "UTF-8");
 			ArrayList<String> headers = binding_data.get(0);
 			for (int n=1; n < binding_data.size(); n++) {
 				ArrayList<String> cells = binding_data.get(n);
@@ -244,9 +258,8 @@ public class FileHandler {
 						binding.setDatatype(value);
 						break;
 					case "synSort":
-						if (value.matches("^[0-9]+$")) {
+						if (value.matches("^[0-9]+$"))
 							order = Integer.parseInt(value);
-						}
 						binding.setSynSort(order);
 						break;
 					case "xPath":
@@ -268,16 +281,12 @@ public class FileHandler {
 			for (Entry<Integer, Binding> entry : semBindingMap.entrySet()) {
 				Integer semSort = entry.getKey();
 				Binding binding = entry.getValue();
-//				String id = binding.getID();
 				String l = binding.getLevel();
 				Integer level = Integer.parseInt(l);
 				parents[level] = semSort;
 				if (level > 0) {
 					int parent_level = level - 1;
 					Integer parent_semSort = parents[parent_level];
-//					Binding parent_binding = semBindingMap.get(parent_semSort);
-//					String parentID = parent_binding.getID();
-//					System.out.println("- FileHandler.parseBinding " + parentID + "->" + id);
 					ArrayList<Integer> children = null;
 					if (childMap.containsKey(parent_semSort)) {
 						children = childMap.get(parent_semSort);
@@ -299,7 +308,6 @@ public class FileHandler {
 				String strippedXPath = stripSelector(xPath);
 				int idx = strippedXPath.lastIndexOf("/");
 				String additionalXPath = "";
-//				String additionalXpath1 = "";
 				if (idx >= 0) {
 					additionalXPath = strippedXPath.substring(0, idx);
 				}
@@ -346,7 +354,13 @@ public class FileHandler {
 //		return count;
 //	}
 	
-	public static Document parseInvoice(String xmlfile) 
+	/**
+	 * 変換元のデジタルインボイスを読み込み、XML DOM及び名前空間を指定したXPathが使用できるように<br>
+	 * XML DOM Document: doc, ルート要素(Element: root)及びxpath(XPath: xpath)を広域変数に設定する。
+	 * 
+	 * @param xmlfile 変換元のデジタルインボイス
+	 */
+	public static void parseInvoice(String xmlfile) 
 	{
 		try {
 		    //Build DOM
@@ -359,14 +373,20 @@ public class FileHandler {
 		    xpath = xpathfactory.newXPath();
 		    xpath.setNamespaceContext(new NamespaceResolver(doc));
 		    // root
-			root = (Element) FileHandler.doc.getChildNodes().item(0);
+			root = (Element) doc.getChildNodes().item(0);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return doc;
 	}
 	
-	public static void parseDoc() {
+	/**
+	 * semSortをキーにバインディング定義のXPathを検索し、それ使用してdocに定義されている要素を取り出して作成したTreeMapであるnodeMapを作成する。
+	 * 
+	 * @return nodeMap semSortをキーとするTreeMap&lt;Integer(semSort) ParsedNod&gt;
+	 * 
+	 */
+	public static TreeMap<Integer, ParsedNode> parseDoc() {
+		TreeMap<Integer/*semSort*/, ParsedNode> nodeMap = new TreeMap<>();
 		for (Integer semSort: semBindingMap.keySet()) {
 			Binding binding = semBindingMap.get(semSort);
 			String xPath = binding.getXPath();
@@ -376,9 +396,13 @@ public class FileHandler {
 			}
 			ParsedNode parsedNode = new ParsedNode(binding, nodes);
 			nodeMap.put(semSort, parsedNode);
-		}		
+		}
+		return nodeMap;
 	}
 	
+	/**
+	 * デジタルインボイスのルート要素のみが定義されたスキーマファイルJP_PINT_XML_SKELTONを読み込んで名前空間を定義する。
+	 */
 	public static void parseSkeleton() 
 	{
 		String skeleton = JP_PINT_XML_SKELTON;
@@ -414,12 +438,20 @@ public class FileHandler {
 		}
 	}
 	
+	/**
+	 * セマンティックモデルのidから、バインディング情報のsemSortを検索し、その値を用いてnodeMapから該当するNodeの値を取り出してnodeValueMapを作成する。
+	 * 
+	 * @param id セマンティックモデルのid
+	 * @return nodeValueMap TreeMap&lt;Integer(順序番号), String(Nodeの値)&gt;
+	 */
 	public static TreeMap<Integer, String> getNodeValues(String id) 
 	{
 		TreeMap<Integer, String> nodeValueMap = new TreeMap<>();
 		Binding binding = bindingDict.get(id);
 		Integer sort = binding.getSemSort();
+		
 		ParsedNode parsedNode = nodeMap.get(sort);
+		
 		List<Node> nodes = parsedNode.nodes;
 		for (int i = 0; i < nodes.size(); i++) {
 			Node node = nodes.get(i);
@@ -430,6 +462,13 @@ public class FileHandler {
 		return nodeValueMap;
 	}
 	
+	/**
+	 * 子要素のidからバインディング定義のXPathを取り出してそれを使用して親要素の下位にある子要素を探し出し、その結果をリストとして返す。
+	 * 
+	 * @param parent　親要素
+	 * @param id　子要素のid
+	 * @return nodes XPathに該当する要素のリスト List&lt;Node&gt; nodes
+	 */
 	public static List<Node> getElements(Element parent, String id) 
 	{
 		Binding binding = (Binding) bindingDict.get(id);
@@ -443,61 +482,86 @@ public class FileHandler {
 		if (id.toLowerCase().matches("^ibt-.+$")) {
 			xpath += "/text()";
 		}
-		List<Node> nodes = xpathEvaluate(parent, xpath);
+		List<Node> nodes = getXPathNodes(parent, xpath);
 		return nodes;
 	}
 	
+	/**
+	 * 親要素から指定されたXPathに該当する要素を探す。
+	 * 
+	 * @param parent 親要素
+	 * @param xpath 親要素からのXPath
+	 * @return
+	 */
 	public static List<Node> getXPath(Element parent, String xpath) 
 	{
-//		System.out.println("-- getXPath "+xpath);
-		xpath = xpath.replaceAll("/Invoice/", "/*/");
+		xpath = xpath.replaceAll("/(Invoice|ubl:Invoice)/", "/*/");
 		if (null==parent) {
 			System.out.println("- FileHaldler.getXPath parent null");
 			return null;
 		}
-		List<Node> nodes = xpathEvaluate(parent, xpath);
+		List<Node> nodes = getXPathNodes(parent, xpath);
 		return nodes;
 	}
 
-	public static TreeMap<Integer, List<Node>> getChildren(Node e, String id) 
+	/**
+	 * セマンティックモデルに基づいて親要素のidから次の方法で子要素を探す。
+	 * <ul>
+	 * <li>親要素から子要素のXPathに基づいて指定されたXML要素を探す.</li>
+	 * <li>及びモデルでは定義されていないが子要素のXPathから追加定義定義されたXPathに該当するXML要素を探す.</li>
+	 * </ul>
+	 * 
+	 * @param parent 親要素
+	 * @param parent_id 親要素のid
+	 * @return 親要素のsemSortをキーとし、子要素(Node)のリストを値とするTreeMap
+	 */
+	public static TreeMap<Integer, List<Node>> getChildren(Node parent, String parent_id) 
 	{
 		TreeMap<Integer, List<Node>> childList = new TreeMap<>();	
-		Binding binding = (Binding) bindingDict.get(id);
+		Binding binding = (Binding) bindingDict.get(parent_id);
 		Integer semSort = binding.getSemSort();
 		String xpath = binding.getXPath();
-		System.out.println("-- getChildren "+id+"("+semSort+")"+xpath);
+		System.out.println("-- getChildren "+parent_id+"("+semSort+")"+xpath);
 
 		ArrayList<Integer> children = childMap.get(semSort);
 		
 		if (null!=children) {
 			for (Integer sort: children) {
 				Binding child_binding = (Binding) semBindingMap.get(sort);
-				String childID =  child_binding.getID();
+				String childID        =  child_binding.getID();
 				String child_datatype = child_binding.getDatatype();
-				String child_xpath = child_binding.getXPath();
-				Set<String> additionalXPath = child_binding.getAdditionalXPath();
-				
+				String child_xpath    = child_binding.getXPath();
+				Set<String> additionalXPath =
+						child_binding.getAdditionalXPath();
 				child_xpath = checkChildXPath(xpath, childID, child_datatype, child_xpath);
 				
-				List<Node> nodes = xpathEvaluate(e, child_xpath);
+				List<Node> nodes = getXPathNodes(parent, child_xpath);
 				
 				if (null!=additionalXPath) {
 					for(Iterator<String> iterator = additionalXPath.iterator(); iterator.hasNext(); ) {
-						String additional_xpath = iterator.next();
-						List<Node> additional_nodes = xpathEvaluate(e, additional_xpath);
+						String additional_xpath     = iterator.next();
+						List<Node> additional_nodes = getXPathNodes(parent, additional_xpath);
 						nodes.addAll(additional_nodes);
 					}
 				}
 				
-				if (nodes.size() > 0) {
+				if (nodes.size() > 0)
 					childList.put(sort, nodes);
-//					System.out.print(child_xpath+" "+nodes.get(0));
-				}
 			}
 		}
 		return childList;
 	}
 
+	/**
+	 * 必要に応じて /text() を追加して、ルート要素からの子要素の相対的な XPath を求める。<br>
+	 * Append /text() where necessary to find the relative XPath of child elements from the parent element.
+	 * 
+	 * @param xpath 親要素のXPath / XPath of the parent Node.
+	 * @param childID 子要素のid /　id of the child Node.
+	 * @param child_datatype 子要素のおデータ型 / Data type of the child Node.
+	 * @param child_xpath 子要素のXPath / XPath of the child Node.
+	 * @return　更新された子要素のXPath / Replaced XPath of the child Node.
+	 */
 	private static String checkChildXPath(
 			String xpath, 
 			String childID, 
@@ -507,16 +571,25 @@ public class FileHandler {
 		if (! xpath.equals("/Invoice") && ! xpath.equals("/ubl:Invoice")) {
 			child_xpath = child_xpath.replace(xpath, ".");
 		}
+		// replace root element in the selector with /*
 		child_xpath = child_xpath.replace("/Invoice/", "/*/");
 		child_xpath = child_xpath.replace("/ubl:Invoice/", "/*/");
-		if (childID.toLowerCase().matches("^ibt-.*$") && ! "String".equals(child_datatype)) {
+		if (childID.toLowerCase().matches("^ibt-.*$") &&
+				! "String".equals(child_datatype)) {
 			child_xpath += "/text()";
 		}
 		return child_xpath;
 	}
 
-	public static List<Node> xpathEvaluate(
-			Node base, 
+	/**
+	 * 親のXML要素から指定されたXPathにあるXML要素を探し見つかった要素を返す.
+	 * 
+	 * @param parent 親のXML要素
+	 * @param xPath 親のXML要素からのXPath
+	 * @return XPathで指定された位置にある子のXML要素のリスト
+	 */
+	public static List<Node> getXPathNodes(
+			Node parent, 
 			String xPath ) 
 	{
 		XPathExpression expr = null;
@@ -526,11 +599,7 @@ public class FileHandler {
 			xPath = xPath.replace("/Invoice", "/*");
 			xPath = xPath.replace("/ubl:Invoice", "/*");
 			expr = xpath.compile(xPath);
-			result = (NodeList) expr.evaluate(base, XPathConstants.NODESET);
-//			if (result.getLength() > 0) {
-//				System.out.print("-- xpathEvaluate "+xPath+" ");
-//				System.out.println(result.getLength()+" "+result.item(0).toString());
-//			}
+			result = (NodeList) expr.evaluate(parent, XPathConstants.NODESET);
 			nodeList = asList(result);	
 			// https://stackoverflow.com/questions/50509663/convert-nodelist-to-list-in-java
 			final int len = nodeList.size();
@@ -540,7 +609,6 @@ public class FileHandler {
 		      if (node.getNodeType() == Node.ELEMENT_NODE ||
 		    		  node.getNodeType() == Node.TEXT_NODE ||
 		    		  node.getNodeType() == Node.ATTRIBUTE_NODE) {
-//		    	  System.out.println(node.toString());
 		    	  nodes.add((Node) node);
 		      }
 		      // Ignore other node types.
@@ -553,12 +621,21 @@ public class FileHandler {
 	}
 	
 	// https://stackoverflow.com/questions/19589231/can-i-iterate-through-a-nodelist-using-for-each-in-java
-	public static List<Node> asList(NodeList n) 
+	/**
+	 * XML要素のNodeListをXML要素のリストList&lt;Node&gt;に変換する.
+	 * @param nodes XML要素のNodeList
+	 * @return 変換されたXML要素のリスト List&lt;Node&gt;
+	 */
+	public static List<Node> asList(NodeList nodes) 
 	{	    
-		return n.getLength()==0
+		return nodes.getLength()==0
 				? Collections.<Node>emptyList()
-				: new NodeListWrapper(n);
+				: new NodeListWrapper(nodes);
 	}
+	/**
+	 * XML要素のNodeListをXML要素のリストList&lt;Node&gt;に変換するためのリストのラッパークラス.<br>
+	 * asList()関数で使用する.
+	 */
 	static final class NodeListWrapper extends AbstractList<Node>	  
 	implements RandomAccess 
 	{	    
@@ -573,7 +650,12 @@ public class FileHandler {
 	      return list.getLength();
 	    }
 	}
-	 
+	
+	/**
+	 * XPathの文字列中に選択条件を指定するSelectorの文字列が含まれていればそのSelector文字列を返す.
+	 * @param xPath XPathの文字列.
+	 * @return 選択条件を指定するSelectorの文字列 [条件式]
+	 */
 	public static String extractSelector(String xPath) 
 	{
 		int start = xPath.indexOf("[");
@@ -585,6 +667,11 @@ public class FileHandler {
 		return selector;
 	}
 	
+	/**
+	 * XPathの文字列中に選択条件を指定するSelectorの文字列が含まれていればそのSelector文字列を削除したXPath文字列を返す.
+	 * @param xPath XPathの文字列.
+	 * @return 選択条件を指定するSelectorの文字列 [条件式] を削除したXPath文字列.
+	 */
 	public static String stripSelector(String path) 
 	{
 		int start = path.indexOf("[");
@@ -595,6 +682,13 @@ public class FileHandler {
 		return path;
 	}
 	
+	/**
+	 * 選択条件を指定するSelector文字列を削除したXPath文字列に、Selectorの文字列を含むXPathの文字列からSelectorを取り出し、そのSelectorをSelector文字列を削除したXPath文字列に戻してその文字列を返す.
+	 * 
+	 * @param strippedPath Selector文字列を削除したXPath文字列.
+	 * @param path Selectorの文字列を含むXPathの文字列.
+	 * @return resumedPath Selector文字列を削除したXPath文字列にSelectorを戻した文字列.
+	 */
 	public static String resumeSelector(String strippedPath, String path) 
 	{
 		String resumedPath = strippedPath;
@@ -615,6 +709,18 @@ public class FileHandler {
 		return resumedPath;	
 	}
 
+	/**
+	 * XML DOM DocumentにXML要素を追加定義し、そのXML要素を親のXML要素の子要素として追加する.
+	 * 
+	 * @param parent 親のXML要素.
+	 * @param nsURI XML要素の名前空間URI.
+	 * @param prefix XML要素の名前空間を指定する接頭辞.
+	 * @param qname XML要素の名前.
+	 * @param value XML要素の値.
+	 * @param attrMap　XML要素の属性.
+	 * 
+	 * @return element 
+	 */
 	public static Element appendElementNS (
 			Element parent,
 			String nsURI, 
@@ -662,6 +768,17 @@ public class FileHandler {
 		}
 	}
 	
+	/**
+	 * XML DOOM DocumentをXMLインスタンス文書ファイルに出力する.
+	 * 
+	 * @param doc XML DOOM Document
+	 * @param filename XMLインスタンス文書ファイル名
+	 * 
+	 * @throws FileNotFoundException
+	 * @throws TransformerException
+	 * @throws TransformerFactoryConfigurationError
+	 * @throws IOException
+	 */
 	public static void writeXML(
 			Document doc, 
 			String filename )
@@ -681,6 +798,15 @@ public class FileHandler {
 		transformer.transform(source, result);
 	}
 
+	/**
+	 * Tidy dataテーブルをCSVファイルに出力する.
+	 * 
+	 * @param filename CSVファイル名.
+	 * @param charset 文字コード.
+	 * 
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 	public static void csvFileWrite(
 			String filename, 
 			String charset )
@@ -698,11 +824,20 @@ public class FileHandler {
 			data.add(row);
 		}
 		
-		csv.writeFile(fileOutputStream, data, charset);
+		CSV.writeFile(fileOutputStream, data, charset);
 
         fileOutputStream.close();
 	}
 
+	/**
+	 * CSVファイルから読み込んでTidy dataテーブルに展開する.
+	 * 
+	 * @param filename CSVファイル名.
+	 * @param charset 文字コード.
+	 * 
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 	public static void csvFileRead(
 			String filename, 
 			String charset )
@@ -713,7 +848,7 @@ public class FileHandler {
 		System.out.println("-- FileHandler.csvFileRead " + filename + " " + charset);
 		FileInputStream fileInputStream = new FileInputStream(filename);
 		
-		ArrayList<ArrayList<String>> data = csv.readFile(fileInputStream, charset);
+		ArrayList<ArrayList<String>> data = CSV.readFile(fileInputStream, charset);
 		
 		// header
 		header = new ArrayList<String>();

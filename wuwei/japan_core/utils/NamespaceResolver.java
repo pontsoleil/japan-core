@@ -8,6 +8,12 @@ import javax.xml.namespace.NamespaceContext;
 
 import org.w3c.dom.Document;
 
+/**
+ * x
+ * 
+ * @author nobuy
+ *
+ */
 public class NamespaceResolver implements NamespaceContext 
 {
 	//Store the source document to search the namespaces

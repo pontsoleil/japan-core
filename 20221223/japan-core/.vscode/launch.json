@@ -1,0 +1,49 @@
+{
+    // IntelliSense を使用して利用可能な属性を学べます。
+    // 既存の属性の説明をホバーして表示します。
+    // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Launch XMLParserSAX",
+            "request": "launch",
+            "mainClass": "core_invoice/space.wuwei.cius.sax.XMLParserSAX",
+            "projectName": "space.wuwei.cius"
+        },
+        {
+            "type": "java",
+            "name": "Launch Csv2Invoice",
+            "request": "launch",
+            "mainClass": "core_invoice/space.wuwei.cius.utils.Csv2Invoice",
+            "projectName": "space.wuwei.cius"
+        },
+        {
+            "type": "java",
+            "name": "Launch Invoice2csv",
+            "request": "launch",
+            "mainClass": "core_invoice/space.wuwei.cius.utils.Invoice2csv",
+            "projectName": "space.wuwei.cius"
+        },
+        {
+            "type": "java",
+            "name": "Launch TestXPath",
+            "request": "launch",
+            "mainClass": "core_invoice/space.wuwei.cius.utils.TestXPath",
+            "projectName": "space.wuwei.cius"
+        },
+        {
+            "type": "java",
+            "name": "Launch XPathTest",
+            "request": "launch",
+            "mainClass": "core_invoice/space.wuwei.cius.xpath.XPathTest",
+            "projectName": "space.wuwei.cius"
+        }
+    ]
+}

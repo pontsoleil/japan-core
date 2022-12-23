@@ -11,18 +11,29 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-
-public class csv {
+/**
+ * 『Java：CSVパーサを作る - RFC4180対応』　[山中秀一氏]を参考に一部改変しています。
+ * http://endeavour.cocolog-nifty.com/developer_room/2008/06/javacsv_793b.html<br>
+ * RFC4180<br>
+ * https://www.rfc-editor.org/rfc/rfc4180.txt
+ *
+ */
+public class CSV {
 	public static ArrayList<String> columns         = new ArrayList<>();
 	public static ArrayList<ArrayList<String>> data = new ArrayList<>();
 
-    public static void main(String[] args) 
+    /**
+     * x
+     * @param args
+     */
+	public static void main(String[] args) 
     {
     	String IN_CSV = "CIUS/data/csv/Example0.csv";
     	String OUT_CSV = "CIUS/data/csv/Example0_out.csv";
+    	String CHARSET = "UTF-8";
 
     	try {
-			data = csvFileRead(IN_CSV,"UTF-8");
+			data = csvFileRead(IN_CSV, CHARSET);
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found "+IN_CSV);
 			e.printStackTrace();
@@ -31,7 +42,7 @@ public class csv {
 		}
     	
     	try {
-    		csvFileWrite(data, OUT_CSV,"UTF-8");
+    		csvFileWrite(data, OUT_CSV, CHARSET);
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found "+OUT_CSV);
 			e.printStackTrace();
@@ -40,7 +51,7 @@ public class csv {
 		}
 
     	try {
-			data = csvFileRead(OUT_CSV,"UTF-8");
+			data = csvFileRead(OUT_CSV, CHARSET);
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found "+OUT_CSV);
 			e.printStackTrace();
@@ -73,7 +84,7 @@ public class csv {
 		OutputStreamWriter outputStreamWriter = null;
 		BufferedWriter bufferedWriter         = null;
 		try {
-			Charset cs                            = Charset.forName(charset);
+			Charset cs         = Charset.forName(charset);
 			outputStreamWriter = new OutputStreamWriter(stream, cs);
 			bufferedWriter     = new BufferedWriter(outputStreamWriter);
 			for (ArrayList<String> columns : data) {
@@ -126,12 +137,12 @@ public class csv {
         return data;
 	}
 
-	// http://endeavour.cocolog-nifty.com/developer_room/2008/06/javacsv_793b.html
-	//------------------------------------------------------------------
 	/**
 	 * CSVファイルの読み込み。
+	 * 
 	 * @param stream 入力ストリーム。FileInputStream，ByteArrayInputStreamなど。
 	 * @param charser 文字コードセット
+	 * 
 	 * @return data ２次元のArrayList
 	 */
 	public static ArrayList<ArrayList<String>> readFile(

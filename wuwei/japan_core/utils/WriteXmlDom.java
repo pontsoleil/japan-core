@@ -21,9 +21,21 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 //import org.w3c.dom.Node;
 
+/**
+ * x
+ * 
+ * @author nobuy
+ *
+ */
 public class WriteXmlDom {
 
-	  public static void main(String[] args)
+	/**
+	 * x  
+	 * @param args
+	 * @throws ParserConfigurationException
+	 * @throws TransformerException
+	 */
+	public static void main(String[] args)
 	          throws ParserConfigurationException, TransformerException {
 
 	      DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
