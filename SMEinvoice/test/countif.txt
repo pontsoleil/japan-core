@@ -1,0 +1,12 @@
+=IF(COUNTIF(L413,"*SubordinateCIILBSubordinateTradeLineItem*"),
+  "明細行",
+  IF("ABIE"=D413,
+    "",
+    COUNTIF(L413,"*TradeLineItem*"),"明細文書","ヘッダ")
+  )
+)
+
+=IF(ISERROR(J3),"",if(LEN(J3)>0,INDEX('SME2JP-PINT'!E:E,MATCH(J3,'SME2JP-PINT'!B:B,0),1),""))
+  
+  
+  

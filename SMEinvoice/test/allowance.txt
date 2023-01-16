@@ -1,0 +1,5 @@
+/rsm:SMEinvoice/rsm:CIIHSupplyChainTradeTransaction/ram:ApplicableCIIHSupplyChainTradeSettlement/ram:SpecifiedCITradeAllowanceCharge[ram:CITradeAllowanceChargeType/udt:Indicator=false()]
+/rsm:SMEinvoice/rsm:CIIHSupplyChainTradeTransaction/ram:ApplicableCIIHSupplyChainTradeSettlement/ram:SpecifiedCITradeAllowanceCharge[ram:ChargeIndicator/udt:Indicator=false()]
+
+/rsm:SMEinvoice/rsm:CIIHSupplyChainTradeTransaction/ram:IncludedCIILSupplyChainTradeLineItem/ram:SubordinateCIILBSubordinateTradeLineItem/ram:ApplicableCITradeProduct
+/rsm:SMEinvoice/rsm:CIIHSupplyChainTradeTransaction/ram:IncludedCIILSupplyChainTradeLineItem/ram:SubordinateCIILBSubordinateTradeLineItem/ram:SpecifiedCITradeProduct

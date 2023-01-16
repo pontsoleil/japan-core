@@ -864,4 +864,43 @@ public class FileHandler {
         fileInputStream.close();
 	}
 
+	
+	/**
+	 * スキーマファイル schema を読み込んで名前空間を定義する。
+	 * 
+	 * @param schema
+	 */
+	public static void parseSchema(String schema) 
+	{
+		try {
+		    //Build DOM
+		    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		    factory.setNamespaceAware(true); // never forget this!
+		    DocumentBuilder builder = factory.newDocumentBuilder();
+		    //Parse XML file
+		    FileInputStream fis = new FileInputStream(new File(schema));
+		    doc = builder.parse(fis);
+		    //Create XPath
+		    XPathFactory xpathfactory = XPathFactory.newInstance();
+		    xpath = xpathfactory.newXPath();
+		    xpath.setNamespaceContext(new NamespaceResolver(doc));
+		    // root
+		 	root = (Element) FileHandler.doc.getChildNodes().item(0);
+		 	nsURIMap = new HashMap<String,String>();
+		 	NamedNodeMap attributes = root.getAttributes();
+		 	for (int i = 0; i < attributes.getLength(); i++) {
+		 		Node attribute = attributes.item(i);
+	            String name = attribute.getNodeName();
+	            if ("xmlns".equals(name)) {
+	            	name = "";
+	            } else {
+	            	name = name.replace("xmlns:","");
+	            }
+	            String value = attribute.getNodeValue();
+	            nsURIMap.put(name, value);
+	        }
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }
