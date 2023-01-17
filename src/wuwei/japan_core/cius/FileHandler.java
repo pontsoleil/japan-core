@@ -35,6 +35,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Attr;
+import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -67,20 +68,15 @@ public class FileHandler {
 	 */
     public static ArrayList<ArrayList<String>> tidyData = new ArrayList<>();
     
-	public static Map<String/*id*/,	Binding> bindingDict =
-			new HashMap<>();
-	public static TreeMap<Integer/*semSort*/, Binding> semBindingMap =
-			new TreeMap<>();
-	static TreeMap<Integer/*synSort*/, Binding> synBindingMap =
-			new TreeMap<>();
-	public static TreeMap<Integer/*parent semSort*/, ArrayList<Integer/*child semSort*/>> childMap =
-			new TreeMap<>();
-	public static TreeMap<Integer/*child semSort*/, Integer/*parent semSort*/> parentMap =
-			new TreeMap<>();
-	public static TreeMap<Integer/*semSort*/, String/*id*/> multipleMap =
-			new TreeMap<>();
-    public static TreeMap<Integer/*semSort*/, ParsedNode> nodeMap =
-    		new TreeMap<>();
+	public static Map<String/*id*/,	Binding> bindingDict = new HashMap<>();
+	public static TreeMap<Integer/*semSort*/, Binding> semBindingMap = new TreeMap<>();
+	static TreeMap<Integer/*synSort*/, Binding> synBindingMap = new TreeMap<>();
+	public static TreeMap<Integer/*parent semSort*/, ArrayList<Integer/*child semSort*/>> childMap = new TreeMap<>();
+	public static TreeMap<Integer/*child semSort*/, Integer/*parent semSort*/> parentMap = new TreeMap<>();
+	public static TreeMap<Integer/*semSort*/, String/*id*/> multipleMap = new TreeMap<>();
+    public static TreeMap<Integer/*semSort*/, ParsedNode> nodeMap = new TreeMap<>();
+
+    public static List<String> xPathCounter = new ArrayList<>();
 
     /**
      * 制御処理のテストを単体でテストする関数
@@ -618,7 +614,7 @@ public class FileHandler {
 			return null;
 		}
 	}
-	
+
 	// https://stackoverflow.com/questions/19589231/can-i-iterate-through-a-nodelist-using-for-each-in-java
 	/**
 	 * XML要素のNodeListをXML要素のリストList&lt;Node&gt;に変換する.
@@ -870,37 +866,205 @@ public class FileHandler {
 	 * 
 	 * @param schema
 	 */
-	public static void parseSchema(String schema) 
+	public static List<String> parseSchema(String schema, String rootType) 
 	{
-		try {
+		int seq = 0,
+			countNodes,
+			i,
+			j;
+		String attrName,
+			attrValue,
+			namespace,
+			schemaLocation,
+			name,
+			unid,
+			type,
+			complexType,
+			minOccurs;
+		List<Node> nodes,
+			elements;
+		Node node,
+			attribute,
+			element;
+		HashMap<String, String> namespaceMap = new HashMap<>();
+		HashMap<String, String> importMap = new HashMap<>();
+    	HashMap<String, String> attrMap = new HashMap<>();
+        HashMap<String, HashMap<String, String>> elementMap = new HashMap<>();
+        NamedNodeMap attributes = null;
+		String rootXPath = "/xsd:schema/xsd:complexType[@name='"+rootType+"']/xsd:sequence/xsd:element";
+ 	    try {
 		    //Build DOM
 		    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		    factory.setNamespaceAware(true); // never forget this!
 		    DocumentBuilder builder = factory.newDocumentBuilder();
 		    //Parse XML file
-		    FileInputStream fis = new FileInputStream(new File(schema));
+		    File schemaFile = new File(schema);
+		    String dirPath = schemaFile.getParent();
+		    FileInputStream fis = new FileInputStream(schemaFile);
 		    doc = builder.parse(fis);
 		    //Create XPath
 		    XPathFactory xpathfactory = XPathFactory.newInstance();
 		    xpath = xpathfactory.newXPath();
 		    xpath.setNamespaceContext(new NamespaceResolver(doc));
-		    // root
-		 	root = (Element) FileHandler.doc.getChildNodes().item(0);
-		 	nsURIMap = new HashMap<String,String>();
-		 	NamedNodeMap attributes = root.getAttributes();
-		 	for (int i = 0; i < attributes.getLength(); i++) {
-		 		Node attribute = attributes.item(i);
-	            String name = attribute.getNodeName();
-	            if ("xmlns".equals(name)) {
-	            	name = "";
-	            } else {
-	            	name = name.replace("xmlns:","");
-	            }
-	            String value = attribute.getNodeValue();
-	            nsURIMap.put(name, value);
+
+        	nodes = getXPathNodes(doc,"/xsd:schema");
+	        node = nodes.get(0);
+		    attributes = node.getAttributes();
+        	namespaceMap = new HashMap<>();
+        	for (j = 0; j < attributes.getLength(); j++) {
+		 		attribute = attributes.item(j);
+	            attrName = attribute.getNodeName();
+	            attrValue = attribute.getNodeValue();
+	            namespaceMap.put(attrName, attrValue);
 	        }
+        	String ramNamespace = namespaceMap.get("xmlns:ram");
+        	nodes = getXPathNodes(doc,"/xsd:schema/xsd:import");
+	        countNodes = nodes.size();
+	        if (countNodes > 0) {
+	            for (i = 0; i < countNodes; i++) {
+	            	node = nodes.get(i);
+	            	namespace = "";
+	            	schemaLocation = "";
+	            	attrMap = new HashMap<>();
+	            	attributes = node.getAttributes();
+	            	for (j = 0; j < attributes.getLength(); j++) {
+	    		 		attribute = attributes.item(j);
+	    	            attrName = attribute.getNodeName();
+	    	            attrValue = attribute.getNodeValue();
+	    	            if ("namespace"==attrName)
+	    	            	namespace = attrValue;
+	    	            else if ("schemaLocation"==attrName)
+	    	            	schemaLocation = attrValue;
+	    	        }
+	            	importMap.put(namespace,schemaLocation);
+	            }
+	        }
+		    //Parse XML file
+	    	String ramSchema = importMap.get(ramNamespace);
+		    fis = new FileInputStream(new File(dirPath,ramSchema));
+		    Document ramDoc = builder.parse(fis);
+		    //Create XPath
+		    XPath ramXpath = xpathfactory.newXPath();
+		    ramXpath.setNamespaceContext(new NamespaceResolver(ramDoc));
+			nodes = getXPathNodes(doc,rootXPath);
+	        countNodes = nodes.size();
+	        unid = null;
+	        if (countNodes > 0) {
+	            for (i = 0; i < countNodes; i++) {
+	            	node = nodes.get(i);
+	            	type = null;
+	            	complexType = null;
+	            	name = null;
+	            	for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
+	            	    if (child.getNodeType() == Node.COMMENT_NODE) {
+	            	        Comment comment = (Comment) child;
+	            	        unid = comment.getData();
+	            	    }
+	            	}
+	            	attrMap = new HashMap<>();
+	            	attributes = node.getAttributes();
+	            	for (j = 0; j < attributes.getLength(); j++) {
+	    		 		attribute = attributes.item(j);
+	    	            attrName = attribute.getNodeName();
+	    	            attrValue = attribute.getNodeValue();
+	    	            attrMap.put(attrName, attrValue);
+	    	            if ("name"==attrName) {
+	    	            	name = attrValue;
+		            	} else if ("type"==attrName) {
+	    	            	if ("ram:".equals(attrValue.substring(0,4))) {
+	    	            		complexType = attrValue.substring(4);    	            		
+	    	            	} else {
+	    	            		type = attrValue;
+	    	            	}
+		            	}
+    	            }
+	            	String _xPath = "rsm:"+name;
+	            	xPathCounter.add(unid+" "+_xPath);
+	            	System.out.println(xPathCounter.size()+" "+unid+" "+_xPath);
+	            	if (complexType!=null) {
+	            		checkComplexType(_xPath,complexType,ramDoc);
+	            	}
+	            }
+	        }
+	        System.out.println("end");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	    return xPathCounter;
+	}
+
+	/**
+	 * @param xPath
+	 * @param type
+	 * @param ramDoc
+	 * @param seq
+	 */
+	private static void checkComplexType(
+			String xPath,
+			String type, 
+			Document ramDoc) {
+		int countNodes;
+		int countElements;
+		int i;
+		int j;
+		int k;
+		String attrName;
+		String attrValue;
+		String name;
+		String complexType;
+		String unid = "";
+		List<Node> nodes;
+		List<Node> elements;
+		Node node;
+		Node attribute;
+		Node element;
+		HashMap<String, String> attrMap;
+//		HashMap<String, HashMap<String, String>> elementMap;
+		NamedNodeMap attributes;
+		String typeXPath = "/xsd:schema/xsd:complexType[@name='" + type +"']";
+		nodes = getXPathNodes(ramDoc,typeXPath);
+	    countNodes = nodes.size();
+	    if (countNodes > 0) {
+	        for (i = 0; i < countNodes; i++) {
+	        	node = nodes.get(i);
+	        	elements = getXPathNodes(node,"xsd:sequence/xsd:element");
+	        	countElements = elements.size();
+	        	for (j = 0; j < countElements; j++) {
+	            	name = null;
+	            	type = null;
+	            	complexType = null;
+	            	element = elements.get(j);
+	            	for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+	            	    if (child.getNodeType() == Node.COMMENT_NODE) {
+	            	        Comment comment = (Comment) child;
+	            	        unid = comment.getData();
+	            	    }
+	            	}
+	        		attrMap = new HashMap<>();
+	            	attributes = element.getAttributes();
+	            	for (k = 0; k < attributes.getLength(); k++) {
+	    		 		attribute = attributes.item(k);
+	    	            attrName = attribute.getNodeName();
+	    	            attrValue = attribute.getNodeValue();
+	    	            attrMap.put(attrName, attrValue);
+	    	            if ("name"==attrName) {
+	    	            	name = attrValue;
+		            	} else if ("type"==attrName) {
+	    	            	if ("ram:".equals(attrValue.substring(0,4))) {
+	    	            		complexType = attrValue.substring(4);    	            		
+	    	            	} else {
+	    	            		type = attrValue;
+	    	            	}
+		            	}
+    	            }
+	            	String _xPath = xPath + "/ram:"+name;
+	            	xPathCounter.add(unid+" "+_xPath);
+	            	System.out.println(xPathCounter.size()+" "+unid+" "+_xPath);
+	            	if (complexType!=null) {
+	            		checkComplexType(_xPath,complexType,ramDoc);
+	            	}
+    	        }
+	        }
+	    }
 	}
 }
