@@ -24,8 +24,8 @@ Copyright (C) XBRL Japan. All Rights Reserved.
 	<!-- ======================================================================= -->
 	<!-- ===== Import of Reusable Aggregate Business Information Entity Schema Module ===== -->
 	<!-- ======================================================================= -->
-	<xsd:import namespace="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:31" schemaLocation="ReusableAggregateBusinessInformationEntity_SME.xsd"/>
-	<!--<xsd:import namespace="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:31" schemaLocation="ReusableAggregateBusinessInformationEntity_31p0.xsd"/>-->
+	<!--<xsd:import namespace="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:31" schemaLocation="ReusableAggregateBusinessInformationEntity_SME.xsd"/>-->
+	<xsd:import namespace="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:31" schemaLocation="ReusableAggregateBusinessInformationEntity_31p0.xsd"/>
 	<!-- ======================================================================= -->
 	<!-- ================================================================== -->
 	<!-- ===== Element Declarations                                   ===== -->
