@@ -12,15 +12,15 @@
  xmlns:rsm="urn:un:unece:uncefact:data:standard:SMEinvoice"
  xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:31"
  xsi:schemaLocation="urn:un:unece:uncefact:data:standard:SMEinvoice ../schema/data/standard/SMEinvoice.xsd" >
-    <ram:CIExchangedDocumentContext>
+    <rsm:CIExchangedDocumentContext>
         <ram:BusinessProcessSpecifiedCIDocumentContextParameter>
             <ram:ID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</ram:ID>
         </ram:BusinessProcessSpecifiedCIDocumentContextParameter>
         <ram:SubsetSpecifiedCIDocumentContextParameter>
 			<ram:ID>urn:fdc:peppol:jp:billing:3.0</ram:ID>
 		</ram:SubsetSpecifiedCIDocumentContextParameter>
-    </ram:CIExchangedDocumentContext>
-    <ram:CIIHExchangedDocument>
+    </rsm:CIExchangedDocumentContext>
+    <rsm:CIIHExchangedDocument>
         <ram:ID>12115118</ram:ID>
         <ram:TypeCode>380</ram:TypeCode>
         <ram:IssueDateTime>
@@ -29,8 +29,8 @@
         <ram:IncludedCINote>
             <ram:Content>Alle leveringen zijn franco. Alle prijzen zijn incl. BTW. Betalingstermijn: 14 dagen netto. Prijswijzigingen voorbehouden. Op al onze aanbiedingen, leveringen en overeenkomsten zijn van toepassing in de algemene verkoop en leveringsvoorwaarden. Gedeponeerd bij de K.v.K. te Amsterdam 25-04-'85.</ram:Content>
         </ram:IncludedCINote>
-    </ram:CIIHExchangedDocument>
-    <ram:CIIHSupplyChainTradeTransaction>
+    </rsm:CIIHExchangedDocument>
+    <rsm:CIIHSupplyChainTradeTransaction>
         <ram:ApplicableCIIHSupplyChainTradeAgreement>
             <ram:SellerCITradeParty>
 				<ram:ID>951753</ram:ID>
@@ -39,16 +39,16 @@
                 <!--<ram:SpecifiedCILegalOrganization>
                     <ram:ID>57151520</ram:ID>
                 </ram:SpecifiedCILegalOrganization>-->
-                <ram:URICIUniversalCommunication>
-					<ram:URIID schemeID="0188">01234567890123</ram:URIID>
-				</ram:URICIUniversalCommunication>
 				<ram:PostalCITradeAddress>
                     <ram:PostcodeCode>1950 AB</ram:PostcodeCode>
                     <ram:LineOne>Postbus 7l</ram:LineOne>
                     <!--<ram:CityName>Velsen-Noord</ram:CityName>-->
                     <ram:CountryID>NL</ram:CountryID>
                 </ram:PostalCITradeAddress>
-            </ram:SellerCITradeParty>
+                <ram:URICIUniversalCommunication>
+					<ram:URIID schemeID="0188">01234567890123</ram:URIID>
+				</ram:URICIUniversalCommunication>
+			</ram:SellerCITradeParty>
             <ram:BuyerCITradeParty>
                 <ram:ID>10202</ram:ID>
                 <ram:Name>ODIN 59</ram:Name>
@@ -63,6 +63,7 @@
                 </ram:PostalCITradeAddress>
             </ram:BuyerCITradeParty>
         </ram:ApplicableCIIHSupplyChainTradeAgreement>
+        <ram:ApplicableCIIHSupplyChainTradeDelivery/>
         <ram:ApplicableCIIHSupplyChainTradeSettlement>
             <ram:PaymentReference>Deb. 10202 / Fact. 12115118</ram:PaymentReference>
             <ram:TaxCurrencyCode>EUR</ram:TaxCurrencyCode>
@@ -108,13 +109,18 @@
                 <ram:NetLineTotalAmount>229.6</ram:NetLineTotalAmount>
             </ram:SpecifiedCIIHTradeSettlementMonetarySummation>
         </ram:ApplicableCIIHSupplyChainTradeSettlement>
-        <ram:ApplicableCIIHSupplyChainTradeDelivery/>
-        <ram:IncludedCIILSupplyChainTradeLineItem>
+<!--        <ram:ApplicableCIIHSupplyChainTradeDelivery/>-->
+		<ram:IncludedCIILSupplyChainTradeLineItem>
             <ram:AssociatedCIILDocumentLineDocument>
                 <ram:LineID>0</ram:LineID>
             </ram:AssociatedCIILDocumentLineDocument>
+            <ram:SpecifiedCIILSupplyChainTradeSettlement/>
             <ram:SubordinateCIILBSubordinateTradeLineItem>
 				<ram:ID>1</ram:ID>											
+				<ram:ApplicableCITradeProduct>
+					<ram:SellerAssignedID>166022</ram:SellerAssignedID>
+					<ram:Name>PATAT FRITES 10MM 10KG</ram:Name>
+				</ram:ApplicableCITradeProduct>
 				<ram:SpecifiedCIILBSupplyChainTradeAgreement>
 					<ram:NetPriceProductCITradePrice>
 						<ram:ChargeAmount>9.95</ram:ChargeAmount>
@@ -134,11 +140,7 @@
 						<ram:LineTotalAmount>19.9</ram:LineTotalAmount>
 					</ram:SpecifiedCIILTradeSettlementMonetarySummation>-->
 				</ram:SpecifiedCIILBSupplyChainTradeSettlement>
-				<ram:ApplicableCITradeProduct>
-					<ram:SellerAssignedID>166022</ram:SellerAssignedID>
-					<ram:Name>PATAT FRITES 10MM 10KG</ram:Name>
-				</ram:ApplicableCITradeProduct>
             </ram:SubordinateCIILBSubordinateTradeLineItem>
         </ram:IncludedCIILSupplyChainTradeLineItem>
-    </ram:CIIHSupplyChainTradeTransaction>
+    </rsm:CIIHSupplyChainTradeTransaction>
 </rsm:SMEinvoice>
