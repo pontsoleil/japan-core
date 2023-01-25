@@ -441,8 +441,8 @@ Japan common commercial invoice, example
 			<cbc:EndDate>2023-10-18</cbc:EndDate> <!-- IBT-135 - Invoice line period end date -->
 		</cac:InvoicePeriod>
 		<cac:DocumentReference> <!-- IBG-36 - LINE DOCUMENT REFERENCE -->
-        	<cbc:ID>D001-3</cbc:ID> <!-- IBT-188 - Invoice line document identifier -->  
-    	</cac:DocumentReference>
+			<cbc:ID>D001-3</cbc:ID> <!-- IBT-188 - Invoice line document identifier -->  
+		</cac:DocumentReference>
 		<cac:Item> <!-- IBG-31 - ITEM INFORMATION -->
 			<!-- cbc:Description, IBT-154 - Item description -->
 			<cbc:Name>検定済教科書(算数)</cbc:Name> <!-- IBT-153 - Item name -->
