@@ -1,10 +1,12 @@
 package wuwei.japan_core.cius;
 
+import java.io.BufferedReader;
 //import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 //import java.io.FileReader;
 import java.io.IOException;
 import java.util.AbstractList;
@@ -52,8 +54,15 @@ public class FileHandler {
 	static String JP_PINT_CSV                = "CIUS/data/base/jp_pint.csv";
 	static String JP_PINT_XML_SKELTON        = "CIUS/data/base/jp_pint_skeleton.xml";
 	
+	static String PROCESSING;
+	
+	static List<String> jp_pint_XPath0       = new ArrayList<>();
+	static List<String> jp_pint_XPath        = new ArrayList<>();
+	
 	public static Document doc               = null;
 	public static XPath xpath                = null;
+	public static Document agDoc             = null;
+	public static XPath agXpath              = null;
 	public static Element root               = null;
 	public static String ROOT_ID             = "ibg-00";
 	public static String[] MULTIPLE_ID       = {"ibg-20", "ibg-21", "ibg-23", "ibg-25","ibg-27", "ibg-28"};
@@ -315,7 +324,7 @@ public class FileHandler {
 					String parentID = parentBinding.getID();
 					String parentXPath = parentBinding.getXPath();
 					String strippedParentXPath = stripSelector(parentXPath);
-//					System.out.println("- FileHandler.parseBinding check additional XPath " + parentID + "->" + id);
+//					System.out.println("- FileHandler.parseBinding check additional XPath "+parentID+"->"+id);
 					if (additionalXPath.length() > 0 &&
 							strippedParentXPath.indexOf(additionalXPath) < 0 &&
 							additionalXPath.indexOf(strippedParentXPath) < 0) {
@@ -672,7 +681,7 @@ public class FileHandler {
 		int start = path.indexOf("[");
 		int last = path.lastIndexOf("]");
 		if (start >= 0) {
-			path = path.substring(0, start) + path.substring(last+1,path.length());	
+			path = path.substring(0, start)+path.substring(last+1,path.length());	
 		}
 		return path;
 	}
@@ -694,10 +703,10 @@ public class FileHandler {
 				String selector = path.substring(start, last+1);
 				String header = strippedPath.substring(0, start);
 				if (start+1 > strippedPath.length()) {
-					resumedPath = header + selector;
+					resumedPath = header+selector;
 				} else {
 					String trailer = strippedPath.substring(start+1, strippedPath.length());
-					resumedPath = header + selector + "/" + trailer;
+					resumedPath = header+selector+"/"+trailer;
 				}
 			}
 		}
@@ -809,7 +818,7 @@ public class FileHandler {
 			FileNotFoundException,
 			IOException 
 	{
-		System.out.println("- FileHandler.csvFileWrite " + filename + " " + charset);
+		System.out.println("- FileHandler.csvFileWrite "+filename+" "+charset);
 		FileOutputStream fileOutputStream = new FileOutputStream(filename);
 		ArrayList<ArrayList<String>> data = new ArrayList<>();	
 		// header
@@ -840,7 +849,7 @@ public class FileHandler {
 			FileNotFoundException,
 			IOException 
 	{
-		System.out.println("-- FileHandler.csvFileRead " + filename + " " + charset);
+		System.out.println("-- FileHandler.csvFileRead "+filename+" "+charset);
 		FileInputStream fileInputStream = new FileInputStream(filename);
 		
 		ArrayList<ArrayList<String>> data = CSV.readFile(fileInputStream, charset);
@@ -868,28 +877,29 @@ public class FileHandler {
 	 */
 	public static List<String> parseSchema(String schema, String rootType) 
 	{
-		int seq = 0,
-			countNodes,
+		int countNodes,
 			i,
 			j;
-		String attrName,
+		String 
+			attrName,
 			attrValue,
 			namespace,
 			schemaLocation,
 			name,
-			unid,
 			type,
-			complexType,
-			minOccurs;
-		List<Node> nodes,
+			ref,
+			unid,
+			complexType;
+		List<Node>
+			nodes,
 			elements;
-		Node node,
+		Node
+			node,
 			attribute,
 			element;
+		Comment comment;
 		HashMap<String, String> namespaceMap = new HashMap<>();
 		HashMap<String, String> importMap = new HashMap<>();
-    	HashMap<String, String> attrMap = new HashMap<>();
-        HashMap<String, HashMap<String, String>> elementMap = new HashMap<>();
         NamedNodeMap attributes = null;
 		String rootXPath = "/xsd:schema/xsd:complexType[@name='"+rootType+"']/xsd:sequence/xsd:element";
  	    try {
@@ -906,7 +916,7 @@ public class FileHandler {
 		    XPathFactory xpathfactory = XPathFactory.newInstance();
 		    xpath = xpathfactory.newXPath();
 		    xpath.setNamespaceContext(new NamespaceResolver(doc));
-
+		    // parse schema
         	nodes = getXPathNodes(doc,"/xsd:schema");
 	        node = nodes.get(0);
 		    attributes = node.getAttributes();
@@ -917,7 +927,12 @@ public class FileHandler {
 	            attrValue = attribute.getNodeValue();
 	            namespaceMap.put(attrName, attrValue);
 	        }
-        	String ramNamespace = namespaceMap.get("xmlns:ram");
+        	String schemaNamespace = "";
+        	if ("UBL"==PROCESSING) {
+        		schemaNamespace = namespaceMap.get("xmlns:cac");
+        	} else if ("CII"==PROCESSING) {
+        		schemaNamespace = namespaceMap.get("xmlns:ram");
+        	}
         	nodes = getXPathNodes(doc,"/xsd:schema/xsd:import");
 	        countNodes = nodes.size();
 	        if (countNodes > 0) {
@@ -925,7 +940,6 @@ public class FileHandler {
 	            	node = nodes.get(i);
 	            	namespace = "";
 	            	schemaLocation = "";
-	            	attrMap = new HashMap<>();
 	            	attributes = node.getAttributes();
 	            	for (j = 0; j < attributes.getLength(); j++) {
 	    		 		attribute = attributes.item(j);
@@ -939,51 +953,72 @@ public class FileHandler {
 	            	importMap.put(namespace,schemaLocation);
 	            }
 	        }
-		    //Parse XML file
-	    	String ramSchema = importMap.get(ramNamespace);
-		    fis = new FileInputStream(new File(dirPath,ramSchema));
-		    Document ramDoc = builder.parse(fis);
-		    //Create XPath
-		    XPath ramXpath = xpathfactory.newXPath();
-		    ramXpath.setNamespaceContext(new NamespaceResolver(ramDoc));
-			nodes = getXPathNodes(doc,rootXPath);
+		    // Parse XML file
+	    	String agSchema = importMap.get(schemaNamespace);
+		    fis = new FileInputStream(new File(dirPath,agSchema));
+		    agDoc = builder.parse(fis);
+		    // Create XPath
+		    agXpath = xpathfactory.newXPath();
+		    agXpath.setNamespaceContext(new NamespaceResolver(agDoc));
+		    // get root XPath
+		    nodes = getXPathNodes(doc,rootXPath);
 	        countNodes = nodes.size();
-	        unid = null;
 	        if (countNodes > 0) {
 	            for (i = 0; i < countNodes; i++) {
 	            	node = nodes.get(i);
-	            	type = null;
-	            	complexType = null;
-	            	name = null;
-	            	for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
-	            	    if (child.getNodeType() == Node.COMMENT_NODE) {
-	            	        Comment comment = (Comment) child;
-	            	        unid = comment.getData();
-	            	    }
-	            	}
-	            	attrMap = new HashMap<>();
 	            	attributes = node.getAttributes();
-	            	for (j = 0; j < attributes.getLength(); j++) {
-	    		 		attribute = attributes.item(j);
-	    	            attrName = attribute.getNodeName();
-	    	            attrValue = attribute.getNodeValue();
-	    	            attrMap.put(attrName, attrValue);
-	    	            if ("name"==attrName) {
-	    	            	name = attrValue;
-		            	} else if ("type"==attrName) {
-	    	            	if ("ram:".equals(attrValue.substring(0,4))) {
-	    	            		complexType = attrValue.substring(4);    	            		
-	    	            	} else {
-	    	            		type = attrValue;
-	    	            	}
+	            	if ("CII"==PROCESSING) {
+		            	complexType = null;
+		            	comment = null;
+				        unid = null;
+		            	for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
+		            	    if (child.getNodeType() == Node.COMMENT_NODE) {
+		            	        comment = (Comment) child;
+		            	        unid = comment.getData();
+		            	    }
 		            	}
+		            	if (null==comment) {
+			        		List<Node> commentElements = getXPathNodes(node,"xsd:annotation/xsd:documentation/ccts:UniqueID");
+			        		if (commentElements.size()>0) {
+			        			Node commentNode = commentElements.get(0);
+			        			unid = commentNode.getTextContent();
+			        		}
+		            	}
+	            		name = attributes.getNamedItem("name").getNodeValue();
+	            		type = attributes.getNamedItem("type").getNodeValue();
+	            		if ("ram:".equals(type.substring(0,4))) {
+		            		complexType = type.substring(4);
+		            		type = null;
+		            	}
+		            	String _xPath = "rsm:"+name;
+		            	xPathCounter.add(unid+" "+_xPath);
+		            	System.out.println(xPathCounter.size()+" "+unid+" "+_xPath);
+		            	if (complexType!=null) {
+		            		checkComplexType(_xPath,complexType);
+		            	}
+	            	} else if ("UBL"==PROCESSING) {
+	            		ref = attributes.getNamedItem("ref").getNodeValue();
+	            		name = ref.substring(4);
+	            		if (jp_pint_XPath.contains(ref)) {
+		    		        xPathCounter.add(ref);
+		    		        if ("ext:".equals(ref.substring(0,4)) ||
+	    	            			"cbc:".equals(ref.substring(0,4))) {
+	    	            		System.out.println(xPathCounter.size()+" "+ref);
+	    	            	} else if ("cac:".equals(ref.substring(0,4))) {
+		            			String elementXPath = "/xsd:schema/xsd:element[@name='"+name +"']";
+		            			elements = getXPathNodes(agDoc,elementXPath);
+		            			int countElements = elements.size();
+		            		    if (countElements > 0) {
+		            		    	element = elements.get(0);
+		            		    	complexType = element.getAttributes().getNamedItem("type").getNodeValue();
+		    		            	System.out.println(xPathCounter.size()+" "+ref);
+		    		            	if (complexType!=null) {
+		    		            		checkComplexType(ref,complexType);
+		    		            	}
+		            		    }
+	    	            	}
+	            		}
     	            }
-	            	String _xPath = "rsm:"+name;
-	            	xPathCounter.add(unid+" "+_xPath);
-	            	System.out.println(xPathCounter.size()+" "+unid+" "+_xPath);
-	            	if (complexType!=null) {
-	            		checkComplexType(_xPath,complexType,ramDoc);
-	            	}
 	            }
 	        }
 	        System.out.println("end");
@@ -995,76 +1030,265 @@ public class FileHandler {
 
 	/**
 	 * @param xPath
-	 * @param type
-	 * @param ramDoc
-	 * @param seq
+	 * @param parentType
 	 */
 	private static void checkComplexType(
 			String xPath,
-			String type, 
-			Document ramDoc) {
+			String parentType) {
 		int countNodes;
-		int countElements;
+		int countElements,countChildElements;
 		int i;
-		int j;
-		int k;
-		String attrName;
-		String attrValue;
-		String name;
-		String complexType;
+		String name = null;
+		String ref = null;
+		String type = null;
+		String complexType = null;
 		String unid = "";
 		List<Node> nodes;
-		List<Node> elements;
+		List<Node> elements,childElements;
 		Node node;
-		Node attribute;
-		Node element;
-		HashMap<String, String> attrMap;
-//		HashMap<String, HashMap<String, String>> elementMap;
+		Node element,childElement;
 		NamedNodeMap attributes;
-		String typeXPath = "/xsd:schema/xsd:complexType[@name='" + type +"']";
-		nodes = getXPathNodes(ramDoc,typeXPath);
+		String typeXPath = "/xsd:schema/xsd:complexType[@name='"+parentType +"']";
+		nodes = getXPathNodes(agDoc,typeXPath);
 	    countNodes = nodes.size();
 	    if (countNodes > 0) {
-	        for (i = 0; i < countNodes; i++) {
-	        	node = nodes.get(i);
-	        	elements = getXPathNodes(node,"xsd:sequence/xsd:element");
-	        	countElements = elements.size();
-	        	for (j = 0; j < countElements; j++) {
-	            	name = null;
-	            	type = null;
-	            	complexType = null;
-	            	element = elements.get(j);
+        	node = nodes.get(0);
+            elements = getXPathNodes(node,"xsd:sequence/xsd:element");
+        	countElements = elements.size();
+        	for (i = 0; i < countElements; i++) {
+            	name = null;
+            	type = null;
+            	complexType = null;
+	            Comment comment = null;
+            	String _xPath = null;
+            	element = elements.get(i);
+            	attributes = element.getAttributes();
+	            if ("CII"==PROCESSING) {
 	            	for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 	            	    if (child.getNodeType() == Node.COMMENT_NODE) {
-	            	        Comment comment = (Comment) child;
+	            	        comment = (Comment) child;
 	            	        unid = comment.getData();
 	            	    }
 	            	}
-	        		attrMap = new HashMap<>();
-	            	attributes = element.getAttributes();
-	            	for (k = 0; k < attributes.getLength(); k++) {
-	    		 		attribute = attributes.item(k);
-	    	            attrName = attribute.getNodeName();
-	    	            attrValue = attribute.getNodeValue();
-	    	            attrMap.put(attrName, attrValue);
-	    	            if ("name"==attrName) {
-	    	            	name = attrValue;
-		            	} else if ("type"==attrName) {
-	    	            	if ("ram:".equals(attrValue.substring(0,4))) {
-	    	            		complexType = attrValue.substring(4);    	            		
-	    	            	} else {
-	    	            		type = attrValue;
-	    	            	}
-		            	}
-    	            }
-	            	String _xPath = xPath + "/ram:"+name;
-	            	xPathCounter.add(unid+" "+_xPath);
-	            	System.out.println(xPathCounter.size()+" "+unid+" "+_xPath);
-	            	if (complexType!=null) {
-	            		checkComplexType(_xPath,complexType,ramDoc);
+	            	if (null==comment) {
+		        		List<Node> commentElements = getXPathNodes(element,"xsd:annotation/xsd:documentation/ccts:UniqueID");
+		        		if (commentElements.size()>0) {
+		        			Node commentNode = commentElements.get(0);
+		        			unid = commentNode.getTextContent();
+		        		}
 	            	}
-    	        }
+            		name = attributes.getNamedItem("name").getNodeValue();
+            		type = attributes.getNamedItem("type").getNodeValue();
+            		if ("ram:".equals(type.substring(0,4))) {
+	            		complexType = type.substring(4);
+	            		type = null;
+	            	}
+              		if (name.indexOf("ProcuringProject")>0) {
+		            	System.out.println("\tProcuringProject:"+unid+" "+"/ram:"+name+" in "+xPath);
+	            	} else if ((xPath+"/").indexOf("/ram:"+name+"/")>0) {
+		            	System.out.println("\trecursive "+unid+" "+"/ram:"+name+" in "+xPath);
+	            	} else {
+		            	_xPath = xPath+"/ram:"+name;
+		            	xPathCounter.add(unid+" "+_xPath);
+		            	System.out.println(xPathCounter.size()+" "+unid+" "+_xPath);
+		            	if (complexType!=null) {
+		            		checkComplexType(_xPath,complexType);
+		            	}
+	            	}
+            	} else if ("UBL"==PROCESSING) {
+            		ref = attributes.getNamedItem("ref").getNodeValue();
+            		if (null!=ref) {
+            			if ("cac:".equals(ref.substring(0,4)) && (xPath+"/").indexOf(ref+"/")>0) {
+    		            	System.out.println("\trecursive "+ref+" in "+xPath);
+    	            	} else {
+		            		name = ref.substring(4);
+		            		_xPath = xPath+"/"+ref;
+		            		if (jp_pint_XPath.contains(_xPath)) {
+			    		        xPathCounter.add(_xPath);
+			    		        System.out.println(xPathCounter.size()+" "+_xPath);
+			    		        if ("cac:".equals(ref.substring(0,4))) {
+			            			String elementXPath = "/xsd:schema/xsd:element[@name='"+name +"']";
+			            			childElements = getXPathNodes(agDoc,elementXPath);
+			            			countChildElements = childElements.size();
+			            		    if (countChildElements > 0) {
+			            		    	childElement = childElements.get(0);
+			            		    	complexType = childElement.getAttributes().getNamedItem("type").getNodeValue();
+			    		            	if (complexType!=null) {
+			    		            		if (jp_pint_XPath.contains(_xPath)) {
+				    		            		checkComplexType(_xPath,complexType);
+			    		            		}
+			    		            	}
+			            		    }
+				            	}
+		            		}
+    	            	}
+            		}
+            	}
 	        }
 	    }
 	}
+	
+    public static void fillXPath(String infile) {
+    	File file = new File(infile);
+    	try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+    		String xPath;
+    		while ((xPath = br.readLine()) != null) {
+    			jp_pint_XPath0.add(xPath);
+    			String path = xPath.replaceAll("\\[.+\\]","");
+    			path = path.replaceAll("/Invoice/", "");
+    			System.out.println(path);
+    			jp_pint_XPath.add(path);
+    		}
+    	} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    public static void updateXPath() {
+    	TreeMap<
+    			Integer/*sequence*/,
+    			String/*xpath*/>
+    		pathCounter = new TreeMap<>();
+    	TreeMap<
+    			String/*selector*/,
+    			TreeMap</*pathCounter*/
+    				Integer/*sequence*/,
+    				String/*xpath*/>>
+    		selectorXPathCounter = new TreeMap<>();
+    	TreeMap<
+    			Integer/*sequence of base*/, 
+    			TreeMap</*selectorXPathCounter*/
+    				String/*selector*/,
+    				TreeMap</*pathCounter*/
+    					Integer/*sequence*/,
+    					String/*xpath*/>>>
+    		baseXPathCounter = new TreeMap<>();
+    	int i;
+		int last = 0;
+    	Integer current=0;
+    	int size = jp_pint_XPath0.size();
+    	for (i = 0; i < size; i++) {
+    		String xpath = jp_pint_XPath0.get(i);
+    		if ("/Invoice".equals(xpath)) {
+    			continue;
+    		}
+    		xpath = xpath.replace("/Invoice/","");
+    		Integer index = 0;
+    		String sequence = null;
+    		String selector = null;
+    		String base = null;
+    		int start = xpath.indexOf("[");
+    		int end = 0;
+    		if (start > 0) {
+    			end = xpath.indexOf("]")+1;
+    		}
+    		if (end > 0) {
+    			base = xpath.substring(0,start);
+    			selector = xpath.substring(start,end);
+    			String _xpath = xpath.replaceAll("\\[.+\\]","");
+	    		index = xPathCounter.indexOf(_xpath);
+	    		if (-1==index) {
+	    			continue;
+	    		}
+	    		if (xpath.indexOf("ChargeIndicator")>0) {
+	    			System.out.println(index+" "+selector+" "+_xpath+"\n\t"+xpath);
+	    		}
+	    		current = index;
+    		} else {
+    			selector = "[]";
+    			index = xPathCounter.indexOf(xpath);
+				if ("cbc:".equals(xpath.substring(0,4))) {
+					base = "Invoice";			
+				} else if (xpath.length() >= 15 && "cac:InvoiceLine".equals(xpath.substring(0,15))) {
+					base = "cac:InvoiceLine";
+				} else if ("cac:".equals(xpath.substring(0,4))) {
+					int loc = xpath.indexOf("/");
+					if (loc > 0) {
+						base = xpath.substring(0,loc);
+					} else {
+						base = xpath;
+					}
+				}
+    		}
+    		int seqBase = 0;
+    		if (xPathCounter.contains(base)) {
+    			seqBase = xPathCounter.indexOf(base);
+    		} else {
+    			seqBase = -1;
+    		}    			
+			if (baseXPathCounter.containsKey(seqBase)) {
+				selectorXPathCounter = baseXPathCounter.get(seqBase);
+			} else {
+				selectorXPathCounter = new TreeMap<>();
+			}
+			if (selectorXPathCounter.containsKey(selector)) {
+				pathCounter = selectorXPathCounter.get(selector);
+			} else {
+				pathCounter = new TreeMap<>();
+			}
+			pathCounter.put(index, xpath);
+			System.out.println(pathCounter.toString());    					
+			selectorXPathCounter.put(selector, pathCounter);
+//			System.out.println(selectorXPathCounter.toString());    					
+			baseXPathCounter.put(seqBase, selectorXPathCounter);
+//			System.out.println(baseXPathCounter.toString());
+    	}
+    	
+    	TreeMap<String,TreeMap<Integer, String>> _selectorXPathCounter = null;
+    	TreeMap<Integer, String> _pathCounter = null;
+    	TreeMap<String,TreeMap<Integer, String>> selectorXPathCounter0 = baseXPathCounter.get(-1);
+    	TreeMap<Integer, String> pathCounter0 = selectorXPathCounter0.get("[]");
+    	TreeMap<String,TreeMap<Integer, String>> selectorXPathCounter1 = baseXPathCounter.get(208);
+    	TreeMap<Integer, String> pathCounter1 = selectorXPathCounter1.get("[]");
+   	
+    	List<String> _xPathCounter = new ArrayList<>();
+     	String selector, path="";
+    	for (Integer num = 0; num < xPathCounter.size(); num++) {
+   			if (baseXPathCounter.containsKey(num)) {
+    			_selectorXPathCounter = baseXPathCounter.get(num);
+    			Iterator<String> itSel = _selectorXPathCounter.keySet().iterator();
+            	while(itSel.hasNext()) {
+            		selector = itSel.next();
+    	        	_pathCounter = _selectorXPathCounter.get(selector);
+    	        	Iterator<Integer> itSeq = _pathCounter.keySet().iterator();
+    	        	while (itSeq.hasNext()) {
+    	        		Integer n = itSeq.next();
+    	        		if (-1==n) {
+    	        			continue;
+    	        		}
+    	        		path = _pathCounter.get(n);
+    	        		_xPathCounter.add(path);
+    	        		System.out.println(_xPathCounter.size()+" "+num +" "+n+" "+path);
+			    		int loc = jp_pint_XPath0.indexOf("/Invoice/"+path)+1;
+			    		String _path = jp_pint_XPath0.get(loc).replaceAll("/Invoice/","");
+			    		boolean isAttribute = _path.indexOf(path)==0 && "/@".equals("/"+_path.charAt(_path.lastIndexOf("/")+1));
+			    		while (isAttribute) {
+			    			_xPathCounter.add(_path);
+					    	System.out.println("\t"+_path);
+			    			if (loc>=jp_pint_XPath0.size()-1) {
+			    				isAttribute = false;
+			    			} else {
+				    			_path = jp_pint_XPath0.get(loc++);
+				    			isAttribute =  _path.indexOf(path)==0 && "/@".equals("/"+_path.charAt(_path.lastIndexOf("/")+1));
+			    			}
+			    		}
+    	        	}
+            	}
+    		} else {
+    			if (pathCounter0.containsKey(num)) { // Invoice
+	    			path = pathCounter0.get(num);
+	        		_xPathCounter.add(path);
+	        		System.out.println(num +" "+path);
+    			} else if (pathCounter1.containsKey(num)) { // InvoiceLine
+	    			path = pathCounter1.get(num);
+	        		_xPathCounter.add(path);
+	        		System.out.println(_xPathCounter.size()+" "+num +" "+path);
+    			}
+    		}
+    	}
+    	xPathCounter = _xPathCounter;
+//    	System.out.println(baseXPathCounter.toString());
+    }
 }
