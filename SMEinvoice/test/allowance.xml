@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== -->
+<!-- ===== Reusable Aggregate Business Information Entity Schema Module ===== -->
+<!-- ====================================================================== -->
+<!--
+Schema agency:  UN/CEFACT
+Schema version: 31.0
+Schema date:    27SEP19
+
+Copyright (C) UN/CEFACT (EP19). All Rights Reserved.
+
+This document and translations of it may be copied and furnished to others, and derivative works that comment on or otherwise explain it or assist in its implementation may be prepared, copied, published and distributed, in whole or in part, without restriction of any kind, provided that the above copyright notice and this paragraph are included on all such copies and derivative works. However, this document itself may not be modified in any way, such as by removing the copyright notice or references to UN/CEFACT, except as needed for the purpose of developing UN/CEFACT specifications, in which case the procedures for copyrights defined in the UN/CEFACT Intellectual Property Rights document must be followed, or as required to translate it into languages other than English.
+
+The limited permissions granted above are perpetual and will not be revoked by UN/CEFACT or its successors or assigns.
+
+This document and the information contained herein is provided on an "AS IS" basis and UN/CEFACT DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+-->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:31" xmlns:ccts="urn:un:unece:uncefact:documentation:standard:CoreComponentsTechnicalSpecification:2" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:31" xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:31" targetNamespace="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:31" elementFormDefault="qualified" attributeFormDefault="unqualified" version="31.0">
+
+<!--
+UN01005839	BBIE	199	IID146	ヘッダ返金課税分類合計金額
+-->
+<xsd:element name="BasisAmount" type="udt:AmountType" minOccurs="0" maxOccurs="unbounded">
+   <xsd:annotation>
+      <xsd:documentation xml:lang="en">
+         <ccts:UniqueID>UN01005839</ccts:UniqueID>
+         <ccts:Acronym>BBIE</ccts:Acronym>
+         <ccts:DictionaryEntryName>CI_ Trade_ Tax. Basis. Amount</ccts:DictionaryEntryName>
+         <ccts:Version>1.0</ccts:Version>
+         <ccts:Definition>A monetary value used as the basis on which this CI trade related tax, levy or duty is calculated.</ccts:Definition>
+      </xsd:documentation>
+   </xsd:annotation>
+</xsd:element>
+
+<!--
+UN01005713	BBIE	199	IID146	ヘッダ返金課税分類合計金額	ヘッダ返金課税分類合計金額＝Σ課税分類明細行返金金額
+-->
+<xsd:element name="ActualAmount" type="udt:AmountType" minOccurs="0" maxOccurs="unbounded">
+   <xsd:annotation>
+      <xsd:documentation xml:lang="en">
+         <ccts:UniqueID>UN01005713</ccts:UniqueID>
+         <ccts:Acronym>BBIE</ccts:Acronym>
+         <ccts:DictionaryEntryName>CI_ Trade_ Allowance Charge. Actual. Amount</ccts:DictionaryEntryName>
+         <ccts:Version>1.0</ccts:Version>
+         <ccts:Definition>An actual monetary value of this CI trade allowance charge.</ccts:Definition>
+      </xsd:documentation>
+   </xsd:annotation>
+</xsd:element>
+
+<!-- ================================================================== -->
+<!-- ===== Type Definition: CITradeAllowanceChargeType            ===== -->
+<!-- ================================================================== -->
+<xsd:element name="SpecifiedCITradeAllowanceCharge" type="ram:CITradeAllowanceChargeType" minOccurs="0" maxOccurs="unbounded">
+   <xsd:annotation>
+      <xsd:documentation xml:lang="en">
+         <ccts:UniqueID>UN01014644</ccts:UniqueID>
+         <ccts:Acronym>ASBIE</ccts:Acronym>
+         <ccts:DictionaryEntryName>CIILB_ Supply Chain_ Trade Settlement. Specified. CI_ Trade_ Allowance Charge</ccts:DictionaryEntryName>
+         <ccts:Version>1.0</ccts:Version>
+         <ccts:Definition>An allowance or charge specified for this CIILB supply chain trade settlement.</ccts:Definition>
+      </xsd:documentation>
+   </xsd:annotation>
+</xsd:element>
+<xsd:complexType name="CITradeAllowanceChargeType">
+   <xsd:annotation>
+      <xsd:documentation xml:lang="en">
+         <ccts:UniqueID>UN01005706</ccts:UniqueID>
+         <ccts:Acronym>ABIE</ccts:Acronym>
+         <ccts:DictionaryEntryName>CI_ Trade_ Allowance Charge. Details</ccts:DictionaryEntryName>
+         <ccts:Version>1.0</ccts:Version>
+         <ccts:Definition>A component of pricing, such as a service, promotion, allowance or charge, for Cross Industry (CI) trade purposes.</ccts:Definition>
+      </xsd:documentation>
+   </xsd:annotation>
+   <xsd:sequence>
+      <xsd:element name="ChargeIndicator" type="udt:IndicatorType" minOccurs="0">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01005707</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Allowance Charge. Charge. Indicator</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>The indication of whether or not this CI trade allowance charge is a charge.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="CalculationPercent" type="udt:PercentType" minOccurs="0">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01005710</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Allowance Charge. Calculation. Percent</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>The percentage applied to calculate this CI trade allowance charge.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="ActualAmount" type="udt:AmountType" minOccurs="0" maxOccurs="unbounded">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01005713</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Allowance Charge. Actual. Amount</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>An actual monetary value of this CI trade allowance charge.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="ReasonCode" type="qdt:AllowanceChargeReasonCodeType" minOccurs="0">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01005714</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Allowance Charge. Reason. Code</ccts:DictionaryEntryName>
+               <ccts:Version>1.1</ccts:Version>
+               <ccts:Definition>The code specifying the reason for this CI trade allowance charge.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Reason" type="udt:TextType" minOccurs="0">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01005715</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Allowance Charge. Reason. Text</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>The reason, expressed as text, for this CI trade allowance charge.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="TypeCode" type="qdt:AllowanceChargeIdentificationCodeType" minOccurs="0">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01008285</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Allowance Charge. Type. Code</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>The code specifying the type of this CI trade allowance or charge.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="BasisAmount" type="udt:AmountType" minOccurs="0">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01008286</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Allowance Charge. Basis. Amount</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>The monetary value that is the basis on which this CI trade allowance or charge is calculated.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="CategoryCITradeTax" type="ram:CITradeTaxType" minOccurs="0" maxOccurs="unbounded">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01005716</ccts:UniqueID>
+               <ccts:Acronym>ASBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Allowance Charge. Category. CI_ Trade_ Tax</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>A tax category of this CI trade allowance charge.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+   </xsd:sequence>
+</xsd:complexType>
+
+<!-- ================================================================== -->
+<!-- ===== Type Definition: CITradeTaxType                        ===== -->
+<!-- ================================================================== -->
+<xsd:complexType name="CITradeTaxType">
+   <xsd:annotation>
+      <xsd:documentation xml:lang="en">
+         <ccts:UniqueID>UN01005832</ccts:UniqueID>
+         <ccts:Acronym>ABIE</ccts:Acronym>
+         <ccts:DictionaryEntryName>CI_ Trade_ Tax. Details</ccts:DictionaryEntryName>
+         <ccts:Version>1.0</ccts:Version>
+         <ccts:Definition>A Cross Industry (CI) trade related fiscal tax, duty or levy.</ccts:Definition>
+      </xsd:documentation>
+   </xsd:annotation>
+   <xsd:sequence>
+      <xsd:element name="CalculatedAmount" type="udt:AmountType" minOccurs="0" maxOccurs="unbounded">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01005833</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Tax. Calculated. Amount</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>A monetary value resulting from the calculation of this CI trade related tax, levy or duty.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="TypeCode" type="qdt:TaxTypeCodeType" minOccurs="0">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01005834</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Tax. Type. Code</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>The code specifying the type of CI trade related tax, levy or duty, such as a code for a Value Added Tax (VAT).</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="ExemptionReason" type="udt:TextType" minOccurs="0">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01005835</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Tax. Exemption Reason. Text</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>The reason, expressed as text, for exemption from this CI trade related tax, levy or duty.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="CalculatedRate" type="udt:RateType" minOccurs="0">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01005836</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Tax. Calculated. Rate</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>The rate used to calculate the amount of this CI trade related tax, levy or duty.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="BasisAmount" type="udt:AmountType" minOccurs="0" maxOccurs="unbounded">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01005839</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Tax. Basis. Amount</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>A monetary value used as the basis on which this CI trade related tax, levy or duty is calculated.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="CategoryCode" type="qdt:TaxCategoryCodeType" minOccurs="0">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01005841</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Tax. Category. Code</ccts:DictionaryEntryName>
+               <ccts:Version>1.1</ccts:Version>
+               <ccts:Definition>The code specifying the category to which this CI trade related tax, levy or duty applies, such as codes for "Exempt from Tax", "Standard Rate", "Free Export Item - Tax Not Charged" .</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="RateApplicablePercent" type="udt:PercentType" minOccurs="0">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01007174</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Tax. Rate_ Applicable. Percent</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>The applicable rate of CI trade tax, expressed as a percentage.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="GrandTotalAmount" type="udt:AmountType" minOccurs="0" maxOccurs="1">
+         <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+               <ccts:UniqueID>UN01013040</ccts:UniqueID>
+               <ccts:Acronym>BBIE</ccts:Acronym>
+               <ccts:DictionaryEntryName>CI_ Trade_ Tax. Grand Total. Amount</ccts:DictionaryEntryName>
+               <ccts:Version>1.0</ccts:Version>
+               <ccts:Definition>The monetary value of the grand total of the basis plus tax for this CI trade tax.</ccts:Definition>
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+   </xsd:sequence>
+</xsd:complexType>
+
+</xsd:schema>

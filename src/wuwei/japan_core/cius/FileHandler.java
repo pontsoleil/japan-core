@@ -51,8 +51,10 @@ import wuwei.japan_core.utils.NamespaceResolver;
  * 物理ファイルとの入出力とその為のデータ変換を制御するクラス
  */
 public class FileHandler {
+	static String CORE_CSV                   = "CIUS/data/base/core_japan.csv";
 	static String JP_PINT_CSV                = "CIUS/data/base/jp_pint.csv";
 	static String JP_PINT_XML_SKELTON        = "CIUS/data/base/jp_pint_skeleton.xml";
+	static String SME_XML_SKELTON            = "CIUS/data/base/sme_skeleton.xml";
 	
 	static String PROCESSING;
 	
@@ -64,8 +66,12 @@ public class FileHandler {
 	public static Document agDoc             = null;
 	public static XPath agXpath              = null;
 	public static Element root               = null;
-	public static String ROOT_ID             = "ibg-00";
-	public static String[] MULTIPLE_ID       = {"ibg-20", "ibg-21", "ibg-23", "ibg-25","ibg-27", "ibg-28"};
+	public static String ROOT_ID             = "JBG-00";
+	public static String PINT_ROOT_ID        = "ibg-00";
+	public static String SME_ROOT_ID         = "JBG-00";
+	public static String[] MULTIPLE_ID       = {"JBG-01","JBG-02","JBG-03","JBG-16","JBG-18","JBG-32","JBG-39","JBG-43","JBG-44","JBG-45","JBG-47","JBG-21","JBG-35","JBG-36","JBG-37","JBG-38","JBG-26","JBG-27","JBG-28","JBG-29","JBG-30","JBG-33","JBG-34","JBG-35","JBG-36","JBG-31","JBG-32","JBG-34","JBG-35","JBG-38","JBG-41","JBG-46","JBG-47","JBG-48"};
+	public static String[] PINT_MULTIPLE_ID  = {"ibg-20", "ibg-21", "ibg-23", "ibg-25","ibg-27", "ibg-28"};
+	public static String[] SME_MULTIPLE_ID   = {"ICL2","ICL3","ICL4","ICL43","ICL45","ICL31","ICL36","ICL40","ICL41","ICL42","ICL45","ICL47","ICL58","ICL59","ICL60","ICL61","ICL56","ICL69","ICL55","ICL62","ICL62","ICL67","ICL67","ICL73","ICL74","ICL91","ICL84","ICL77","ICL85","ICL86","ICL87"};
 	public static HashMap<String, String> nsURIMap = null;
 	
 	/**
