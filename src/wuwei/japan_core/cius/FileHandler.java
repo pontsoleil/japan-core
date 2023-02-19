@@ -37,7 +37,6 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Attr;
-import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -51,47 +50,55 @@ import wuwei.japan_core.utils.NamespaceResolver;
  * 物理ファイルとの入出力とその為のデータ変換を制御するクラス
  */
 public class FileHandler {
-	static String CORE_CSV                   = "CIUS/data/base/core_japan.csv";
-	static String JP_PINT_CSV                = "CIUS/data/base/jp_pint.csv";
-	static String JP_PINT_XML_SKELTON        = "CIUS/data/base/jp_pint_skeleton.xml";
-	static String SME_XML_SKELTON            = "CIUS/data/base/sme_skeleton.xml";
-	
-	static String PROCESSING;
-	
-	static List<String> jp_pint_XPath0       = new ArrayList<>();
-	static List<String> jp_pint_XPath        = new ArrayList<>();
+	static String CORE_CSV;
+	static String TERMINAL_ELEMENTS;
+	static String XML_SKELTON;
+	static String JP_PINT_CSV                = "data/base/jp_pint_binding.csv";
+	static String JP_PINT_XML_SKELTON        = "data/base/jp_pint_skeleton.xml";
+	static String SME_CSV                    = "data/base/sme_binding.csv";
+	static String SME_XML_SKELTON            = "data/base/sme_skeleton.xml";
 	
 	public static Document doc               = null;
 	public static XPath xpath                = null;
-	public static Document agDoc             = null;
-	public static XPath agXpath              = null;
 	public static Element root               = null;
 	public static String ROOT_ID             = "JBG-00";
-	public static String PINT_ROOT_ID        = "ibg-00";
-	public static String SME_ROOT_ID         = "JBG-00";
 	public static String[] MULTIPLE_ID       = {"JBG-01","JBG-02","JBG-03","JBG-16","JBG-18","JBG-32","JBG-39","JBG-43","JBG-44","JBG-45","JBG-47","JBG-21","JBG-35","JBG-36","JBG-37","JBG-38","JBG-26","JBG-27","JBG-28","JBG-29","JBG-30","JBG-33","JBG-34","JBG-35","JBG-36","JBG-31","JBG-32","JBG-34","JBG-35","JBG-38","JBG-41","JBG-46","JBG-47","JBG-48"};
 	public static String[] PINT_MULTIPLE_ID  = {"ibg-20", "ibg-21", "ibg-23", "ibg-25","ibg-27", "ibg-28"};
 	public static String[] SME_MULTIPLE_ID   = {"ICL2","ICL3","ICL4","ICL43","ICL45","ICL31","ICL36","ICL40","ICL41","ICL42","ICL45","ICL47","ICL58","ICL59","ICL60","ICL61","ICL56","ICL69","ICL55","ICL62","ICL62","ICL67","ICL67","ICL73","ICL74","ICL91","ICL84","ICL77","ICL85","ICL86","ICL87"};
 	public static HashMap<String, String> nsURIMap = null;
+			
+	public static boolean TRACE = true;
+    static String PROCESSING    = null;
+	
+	/**
+	 * 終端XML要素
+	 */
+	public static ArrayList<String> terminalElements = new ArrayList<>();
 	
 	/**
 	 * Tidy dataテーブルの見出し行
 	 */
-	public static ArrayList<String> header   = new ArrayList<>();
+	public static ArrayList<String> header = new ArrayList<>();
+	
 	/**
 	 * Tidy dataテーブル
 	 */
     public static ArrayList<ArrayList<String>> tidyData = new ArrayList<>();
     
-	public static Map<String/*id*/,	Binding> bindingDict = new HashMap<>();
-	public static TreeMap<Integer/*semSort*/, Binding> semBindingMap = new TreeMap<>();
-	static TreeMap<Integer/*synSort*/, Binding> synBindingMap = new TreeMap<>();
-	public static TreeMap<Integer/*parent semSort*/, ArrayList<Integer/*child semSort*/>> childMap = new TreeMap<>();
-	public static TreeMap<Integer/*child semSort*/, Integer/*parent semSort*/> parentMap = new TreeMap<>();
-	public static TreeMap<Integer/*semSort*/, String/*id*/> multipleMap = new TreeMap<>();
-    public static TreeMap<Integer/*semSort*/, ParsedNode> nodeMap = new TreeMap<>();
-
-    public static List<String> xPathCounter = new ArrayList<>();
+	public static Map<String/*id*/,	Binding> bindingDict =
+			new HashMap<>();
+	public static TreeMap<Integer/*semSort*/, Binding> semBindingMap =
+			new TreeMap<>();
+	static TreeMap<Integer/*synSort*/, Binding> synBindingMap =
+			new TreeMap<>();
+	public static TreeMap<Integer/*parent semSort*/, ArrayList<Integer/*child semSort*/>> childMap =
+			new TreeMap<>();
+	public static TreeMap<Integer/*child semSort*/, Integer/*parent semSort*/> parentMap =
+			new TreeMap<>();
+	public static TreeMap<Integer/*semSort*/, String/*id*/> multipleMap =
+			new TreeMap<>();
+    public static TreeMap<Integer/*semSort*/, ParsedNode> nodeMap =
+    		new TreeMap<>();
 
     /**
      * 制御処理のテストを単体でテストする関数
@@ -101,120 +108,122 @@ public class FileHandler {
     public static void main(String[] args) 
     {
     	String IN_XML = "data/xml/Example1.xml";
+    	CORE_CSV = JP_PINT_CSV;
     	
 		parseBinding();
 		parseInvoice(IN_XML);
 		parseDoc();
-		
-		List<Node> nodes;
-		ParsedNode parsedNode;
-		
-	    // ibt-0373 - INVOICING PERIOD Start date 
-		Binding ibt73Binding = bindingDict.get("ibt-073");
-		Integer ibt73Sort = ibt73Binding.getSemSort();
-		parsedNode = nodeMap.get(ibt73Sort);
-		nodes = parsedNode.nodes;
-		for (int i = 0; i < nodes.size(); i++) {
-			Node node = nodes.get(i);
-			System.out.println(i+" "+node.getNodeName()+" "+node.getTextContent());
-		}
-		
-		// ibt-024 Specification identifier
-		Binding ibt24Binding = bindingDict.get("ibt-024");
-		Integer ibt24Sort = ibt24Binding.getSemSort();
-		parsedNode = nodeMap.get(ibt24Sort);
-		nodes = parsedNode.nodes;
-		for (int i = 0; i < nodes.size(); i++) {
-			Node node = nodes.get(i);
-			System.out.println("ibt-024 Specification identifier "+i+" "+node.getNodeName()+" "+node.getTextContent());
-		}		
-		
-	    // ibg-23 TAX BREAKDOWN
-		Binding ibg23Bindingt = bindingDict.get("ibg-23");
-		Integer ibg23Sort = ibg23Bindingt.getSemSort();
-		ArrayList<Integer> childSorts = childMap.get(ibg23Sort);
-		for (Integer childSort : childSorts) {
-			parsedNode = nodeMap.get(childSort);
-			nodes = parsedNode.nodes;
-			for (int i = 0; i < nodes.size(); i++) {
-				String value = "";
-				Node node = nodes.get(i);
-				System.out.print(i+" "+node.getNodeName()+" "+node.getTextContent());
-				if (node.hasAttributes()) {
-					NamedNodeMap attributes = node.getAttributes();
-					int attrLength = attributes.getLength();
-					for (int j = 0; j < attrLength; j++) {
-						Node attribute = attributes.item(j);
-				        String name = attribute.getNodeName();
-				        if ("currencyID".equals(name)) {
-				           value = attribute.getNodeValue();
-				           System.out.println(" "+value);
-				        }
-					} 
-				} else {
-					System.out.println("");
-				}
-			}
-		}
-	
-	    // ibt-034-1 - Scheme identifier 
-		Binding ibt34_1Binding = bindingDict.get("ibt-034-1");
-		Integer ibt34_1Sort = ibt34_1Binding.getSemSort();
-		parsedNode = nodeMap.get(ibt34_1Sort);
-		nodes = parsedNode.nodes;
-		for (int i = 0; i < nodes.size(); i++) {
-			Node node = nodes.get(i);
-			System.out.println(i+" "+node.getNodeName()+" "+node.getTextContent());
-		}
-		
-		// ibt-160 Item attribute name
-		TreeMap<Integer, String> nodeValues = getNodeValues("ibt-160");
-		for (int i = 0; i <nodeValues.size(); i++) {
-			String value = nodeValues.get(i);
-			System.out.println("ibt-160"+i+" "+value);
-		}
-		
-		// ibg-23 TAX BREAKDOWN <cac:TaxSubtotal>
-		nodes = getElements(root, "ibg-23");
-	    int nodesLength = nodes.size();
-	    for (int i = 0; i < nodesLength; i++) {	      
-	        Element node = (Element) nodes.get(i);
-	        
-	        TreeMap<Integer, List<Node>> childrenMap = getChildren(node, "ibg-23");
-	        
-	        // Iterating HashMap through for loop
-	        for (Integer sort : childrenMap.keySet()) {
-	        	Binding binding = semBindingMap.get(sort);
-	        	String id = binding.getID();
-	        	String BT = binding.getBT();
-	        	List<Node> children = childrenMap.get(sort);
-	        	Node child = children.get(0);
-	        	if (null!=child) {
-	        		System.out.println(id+" "+BT+" "+child.getNodeValue());
-	        	} else {
-	        		System.out.println(id+" "+BT+" N/A");
-	        	}
-	        }
-	    }
-
-	    // ibt-034-1 - Scheme identifier 
-	    List<Node> sellerEASAttrs = getElements(FileHandler.root, "ibt-034-1");
-	    if (sellerEASAttrs.size() > 0) {
-	    	Node sellerEASAttr = sellerEASAttrs.get(0);
-	    	String sellerElectronicAddressSchemeIdentifier = sellerEASAttr.getNodeValue();
-	    	System.out.println("ibt-034-1 "+sellerElectronicAddressSchemeIdentifier);
-	    }
-	    
-		// cbc:DocumentCurrencyCode
-		List<Node> documentCurrencyCodeEls = getElements(root, "ibt-005");//"/*/cbc:DocumentCurrencyCode/text()");
-		Node documentCurrencyCodeEl = documentCurrencyCodeEls.get(0);
-		String documentCurrencyCode = documentCurrencyCodeEl.getTextContent();
-	    System.out.println("ibt-005 "+documentCurrencyCode);
-	    
-		// ibt-110 Invoice total TAX amount
-	    List<Node> invoiceTotalTaxAmountEl = getElements(FileHandler.root, "ibt-110");
-	    String invoiceTotalTaxAmount = invoiceTotalTaxAmountEl.get(0).getTextContent();
-	    System.out.println("ibt-110 "+invoiceTotalTaxAmount);
+//		
+//		List<Node> nodes;
+//		ParsedNode parsedNode;
+//		
+//	    // ibt-0373 - INVOICING PERIOD Start date 
+//		Binding ibt73Binding = bindingDict.get("ibt-073");
+//		Integer ibt73Sort = ibt73Binding.getSemSort();
+//		parsedNode = nodeMap.get(ibt73Sort);
+//		nodes = parsedNode.nodes;
+//		for (int i = 0; i < nodes.size(); i++) {
+//			Node node = nodes.get(i);
+//			if (TRACE) System.out.println(" (FileHandler) "+i+" "+node.getNodeName()+" "+node.getTextContent());
+//		}
+//		
+//		// ibt-024 Specification identifier
+//		Binding ibt24Binding = bindingDict.get("ibt-024");
+//		Integer ibt24Sort = ibt24Binding.getSemSort();
+//		parsedNode = nodeMap.get(ibt24Sort);
+//		nodes = parsedNode.nodes;
+//		for (int i = 0; i < nodes.size(); i++) {
+//			Node node = nodes.get(i);
+//			if (TRACE) System.out.println("ibt-024 Specification identifier "+i+" "+node.getNodeName()+" "+node.getTextContent());
+//		}		
+//		
+//	    // ibg-23 TAX BREAKDOWN
+//		Binding ibg23Bindingt = bindingDict.get("ibg-23");
+//		Integer ibg23Sort = ibg23Bindingt.getSemSort();
+//		ArrayList<Integer> childSorts = childMap.get(ibg23Sort);
+//		for (Integer childSort : childSorts) {
+//			parsedNode = nodeMap.get(childSort);
+//			nodes = parsedNode.nodes;
+//			for (int i = 0; i < nodes.size(); i++) {
+//				String value = "";
+//				Node node = nodes.get(i);
+//				if (TRACE) System.out.print(i+" "+node.getNodeName()+" "+node.getTextContent());
+//				if (node.hasAttributes()) {
+//					NamedNodeMap attributes = node.getAttributes();
+//					int attrLength = attributes.getLength();
+//					for (int j = 0; j < attrLength; j++) {
+//						Node attribute = attributes.item(j);
+//				        String name = attribute.getNodeName();
+//				        if ("currencyID".equals(name)) {
+//				           value = attribute.getNodeValue();
+//				           if (TRACE) System.out.println(" "+value);
+//				        }
+//					} 
+//				} else {
+//					if (TRACE) System.out.println("");
+//				}
+//			}
+//		}
+//	
+//	    // ibt-034-1 - Scheme identifier 
+//		Binding ibt34_1Binding = bindingDict.get("ibt-034-1");
+//		Integer ibt34_1Sort = ibt34_1Binding.getSemSort();
+//		parsedNode = nodeMap.get(ibt34_1Sort);
+//		nodes = parsedNode.nodes;
+//		for (int i = 0; i < nodes.size(); i++) {
+//			Node node = nodes.get(i);
+//			if (TRACE) System.out.println(i+" "+node.getNodeName()+" "+node.getTextContent());
+//		}
+//		
+//		// ibt-160 Item attribute name
+//		TreeMap<Integer, String> nodeValues = getNodeValues("ibt-160");
+//		for (int i = 0; i <nodeValues.size(); i++) {
+//			String value = nodeValues.get(i);
+//			if (TRACE) System.out.println("ibt-160"+i+" "+value);
+//		}
+//		
+//		// ibg-23 TAX BREAKDOWN <cac:TaxSubtotal>
+//		nodes = getElements(root, "ibg-23");
+//	    int nodesLength = nodes.size();
+//	    for (int i = 0; i < nodesLength; i++) {	      
+//	        Element node = (Element) nodes.get(i);
+//	        
+//	        TreeMap<Integer, List<Node>> childrenMap = getChildren(node, "ibg-23");
+//	        
+//	        // Iterating HashMap through for loop
+//	        for (Integer sort : childrenMap.keySet()) {
+//	        	Binding binding = semBindingMap.get(sort);
+//	        	String id = binding.getID();
+//	        	String BT = binding.getBT();
+//	        	List<Node> children = childrenMap.get(sort);
+//	        	Node child = children.get(0);
+//	        	if (TRACE)
+//		        	if (null!=child) {
+//		        		System.out.println(id+" "+BT+" "+child.getNodeValue());
+//		        	} else {
+//		        		System.out.println(id+" "+BT+" N/A");
+//		        	}
+//	        }
+//	    }
+//
+//	    // ibt-034-1 - Scheme identifier 
+//	    List<Node> sellerEASAttrs = getElements(FileHandler.root, "ibt-034-1");
+//	    if (sellerEASAttrs.size() > 0) {
+//	    	Node sellerEASAttr = sellerEASAttrs.get(0);
+//	    	String sellerElectronicAddressSchemeIdentifier = sellerEASAttr.getNodeValue();
+//	    	if (TRACE) System.out.println("ibt-034-1 "+sellerElectronicAddressSchemeIdentifier);
+//	    }
+//	    
+//		// cbc:DocumentCurrencyCode
+//		List<Node> documentCurrencyCodeEls = getElements(root, "ibt-005");//"/*/cbc:DocumentCurrencyCode/text()");
+//		Node documentCurrencyCodeEl = documentCurrencyCodeEls.get(0);
+//		String documentCurrencyCode = documentCurrencyCodeEl.getTextContent();
+//		if (TRACE) System.out.println("ibt-005 "+documentCurrencyCode);
+//	    
+//		// ibt-110 Invoice total TAX amount
+//	    List<Node> invoiceTotalTaxAmountEl = getElements(FileHandler.root, "ibt-110");
+//	    String invoiceTotalTaxAmount = invoiceTotalTaxAmountEl.get(0).getTextContent();
+//	    if (TRACE) System.out.println("ibt-110 "+invoiceTotalTaxAmount);
 	    
     }
     
@@ -226,13 +235,13 @@ public class FileHandler {
 	 */
     public static void parseBinding() 
 	{
-		System.out.println("-- parseBinding");
+    	if (TRACE) System.out.println(" (FileHandler) parseBinding");
 
 		Integer[] parents       = new Integer[10];
 		Binding[] bindingParent = new Binding[10];
 		ArrayList<ArrayList<String>> binding_data = new ArrayList<>();
 		try {
-			FileInputStream fileInputStream = new FileInputStream(JP_PINT_CSV);
+			FileInputStream fileInputStream = new FileInputStream(CORE_CSV);
 			binding_data = CSV.readFile(fileInputStream, "UTF-8");
 			ArrayList<String> headers = binding_data.get(0);
 			for (int n=1; n < binding_data.size(); n++) {
@@ -240,7 +249,7 @@ public class FileHandler {
 				// semSort,id,card,level,businessTerm,desc,dataType,businessTerm_ja,desc_ja,synSort,element,synDatatype,xPath,occur
 				// 1       2  3    4     5            6    7        8               9       10      11      12          13    14				
 				Binding binding = new Binding(0, "", "", "", "", "", 0, "", "");
-				for (int i = 0; i < headers.size(); i++) {
+				for (int i = 0; i < cells.size(); i++) {
 					String key = headers.get(i);
 					if (0==i) {
 						key	= key.replace("\uFEFF", "");
@@ -260,6 +269,7 @@ public class FileHandler {
 						break;
 					case "level":
 						binding.setLevel(value);
+//						binding.setLevel(Integer.toString(Integer.parseInt(value) - 1));
 						break;
 					case "businessTerm":
 						binding.setBT(value);
@@ -282,7 +292,7 @@ public class FileHandler {
 				String id = binding.getID();
 				Integer semSort = binding.getSemSort();
 				Integer synSort = binding.getSynSort();
-//				System.out.println("- FileHandler.parseBinding "+binding.getID()+" "+binding.getXPath());
+				if (TRACE) System.out.println(" (FileHandler) parseBinding "+binding.getID()+" "+binding.getXPath());
 				bindingDict.put(id, binding);
 				semBindingMap.put(semSort, binding);
 				synBindingMap.put(synSort, binding);
@@ -330,19 +340,21 @@ public class FileHandler {
 					String parentID = parentBinding.getID();
 					String parentXPath = parentBinding.getXPath();
 					String strippedParentXPath = stripSelector(parentXPath);
-//					System.out.println("- FileHandler.parseBinding check additional XPath "+parentID+"->"+id);
-					if (additionalXPath.length() > 0 &&
-							strippedParentXPath.indexOf(additionalXPath) < 0 &&
+					if (TRACE) System.out.println(" (FileHandler) parseBinding check additional XPath " + parentID + "->" + id);
+					if (additionalXPath.length() > 0 && additionalXPath.lastIndexOf("/") > 0 &&
+							strippedParentXPath.indexOf(additionalXPath) >= 0 &&
+//							strippedParentXPath.indexOf(additionalXPath) < 0 &&
 							additionalXPath.indexOf(strippedParentXPath) < 0) {
 						additionalXPath = resumeSelector(additionalXPath, xPath);
-						System.out.println(id+" "+xPath+" "+parentID+" "+parentXPath+"\n    ADDED parent XPath: "+parentXPath+" additional Xpath: "+additionalXPath);
+						if (TRACE) System.out.println(id+" "+xPath+" "+parentID+" "+parentXPath+"\n    ADDED parent XPath: "+parentXPath+" additional Xpath: "+additionalXPath);
 						
 						parentBinding.addAdditionalXPath(additionalXPath);
-					} else if (idx > 0 && xPath.length() > 0 &&
-							strippedParentXPath.indexOf(xPath) < 0 &&
+					} else if (idx > 0 && xPath.length() > 0 && xPath.lastIndexOf("/") > 0 &&
+							strippedParentXPath.indexOf(xPath) >= 0 &&
+//							strippedParentXPath.indexOf(xPath) < 0 &&
 							xPath.indexOf(strippedParentXPath) < 0) {
 						additionalXPath = xPath;
-						System.out.println(id+" "+xPath+" "+parentID+" "+parentXPath+"\n    ADDED parent XPath: "+parentXPath+" additional Xpath: "+additionalXPath);
+						if (TRACE) System.out.println(id+" "+xPath+" "+parentID+" "+parentXPath+"\n    ADDED parent XPath: "+parentXPath+" additional Xpath: "+additionalXPath);
 						
 						parentBinding.addAdditionalXPath(additionalXPath);
 					}
@@ -401,21 +413,23 @@ public class FileHandler {
 			Binding binding = semBindingMap.get(semSort);
 			String xPath = binding.getXPath();
 			List<Node> nodes = getXPath(root, xPath);
-			if (nodes.size() > 0) {
-				binding.setUsed(true);
+			if (null!=nodes) {
+				if (nodes.size() > 0) {
+					binding.setUsed(true);
+				}
+				ParsedNode parsedNode = new ParsedNode(binding, nodes);
+				nodeMap.put(semSort, parsedNode);
 			}
-			ParsedNode parsedNode = new ParsedNode(binding, nodes);
-			nodeMap.put(semSort, parsedNode);
 		}
 		return nodeMap;
 	}
 	
 	/**
-	 * デジタルインボイスのルート要素のみが定義されたスキーマファイルJP_PINT_XML_SKELTONを読み込んで名前空間を定義する。
+	 * デジタルインボイスのルート要素のみが定義されたスキーマファイルXML_SKELTONを読み込んで名前空間を定義する。
 	 */
 	public static void parseSkeleton() 
 	{
-		String skeleton = JP_PINT_XML_SKELTON;
+		String skeleton = XML_SKELTON;
 		try {
 		    //Build DOM
 		    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -518,7 +532,7 @@ public class FileHandler {
 	 * セマンティックモデルに基づいて親要素のidから次の方法で子要素を探す。
 	 * <ul>
 	 * <li>親要素から子要素のXPathに基づいて指定されたXML要素を探す.</li>
-	 * <li>及びモデルでは定義されていないが子要素のXPathから追加定義定義されたXPathに該当するXML要素を探す.</li>
+	 * <li>及び構文バインディングでは定義されていないが子要素のXPathから、その親要素のXPathのXML要素を追加定義する.</li>
 	 * </ul>
 	 * 
 	 * @param parent 親要素
@@ -531,32 +545,33 @@ public class FileHandler {
 		Binding binding = (Binding) bindingDict.get(parent_id);
 		Integer semSort = binding.getSemSort();
 		String xpath = binding.getXPath();
-		System.out.println("-- getChildren "+parent_id+"("+semSort+")"+xpath);
+		if (TRACE) System.out.println(" (FileHandler) getChildren "+parent_id+"(semSort="+semSort+") "+xpath);
 
 		ArrayList<Integer> children = childMap.get(semSort);
 		
 		if (null!=children) {
 			for (Integer sort: children) {
-				Binding child_binding = (Binding) semBindingMap.get(sort);
-				String childID        =  child_binding.getID();
-				String child_datatype = child_binding.getDatatype();
-				String child_xpath    = child_binding.getXPath();
-				Set<String> additionalXPath =
-						child_binding.getAdditionalXPath();
-				child_xpath = checkChildXPath(xpath, childID, child_datatype, child_xpath);
+				Binding child_binding       = (Binding) semBindingMap.get(sort);
+				String childID              = child_binding.getID();
+				String child_datatype       = child_binding.getDatatype();
+				String child_xpath          = child_binding.getXPath();
+				Set<String> additionalXPath = child_binding.getAdditionalXPath();
+				child_xpath                 = checkChildXPath(xpath, childID, child_datatype, child_xpath);
 				
 				List<Node> nodes = getXPathNodes(parent, child_xpath);
 				
-				if (null!=additionalXPath) {
+				if (nodes.size() > 0) {
+					childList.put(sort, nodes);				
+				} else if (null!=additionalXPath) {
 					for(Iterator<String> iterator = additionalXPath.iterator(); iterator.hasNext(); ) {
 						String additional_xpath     = iterator.next();
 						List<Node> additional_nodes = getXPathNodes(parent, additional_xpath);
-						nodes.addAll(additional_nodes);
+						if (additional_nodes.size() > 0)
+							nodes = getXPathNodes(additional_nodes.get(0), child_xpath);
+							if (nodes.size() > 0)
+								childList.put(sort, nodes);						
 					}
 				}
-				
-				if (nodes.size() > 0)
-					childList.put(sort, nodes);
 			}
 		}
 		return childList;
@@ -606,8 +621,13 @@ public class FileHandler {
 		NodeList result;
 		List<Node> nodeList = new ArrayList<>();
 		try {
-			xPath = xPath.replace("/Invoice", "/*");
-			xPath = xPath.replace("/ubl:Invoice", "/*");
+			if ("JP PINT"==PROCESSING) {
+				xPath = xPath.replace("/Invoice", "/*");
+				xPath = xPath.replace("/ubl:Invoice", "/*");
+//			} else if ("SME COMMON"==PROCESSING && xPath.indexOf("ram:TaxCurrencyCode]")>0) {
+//				if (TRACE) System.out.println(" (FileHandler) getXPathNodes "+xPath);
+//				return null;
+			}
 			expr = xpath.compile(xPath);
 			result = (NodeList) expr.evaluate(parent, XPathConstants.NODESET);
 			nodeList = asList(result);	
@@ -629,7 +649,7 @@ public class FileHandler {
 			return null;
 		}
 	}
-
+	
 	// https://stackoverflow.com/questions/19589231/can-i-iterate-through-a-nodelist-using-for-each-in-java
 	/**
 	 * XML要素のNodeListをXML要素のリストList&lt;Node&gt;に変換する.
@@ -687,7 +707,7 @@ public class FileHandler {
 		int start = path.indexOf("[");
 		int last = path.lastIndexOf("]");
 		if (start >= 0) {
-			path = path.substring(0, start)+path.substring(last+1,path.length());	
+			path = path.substring(0, start) + path.substring(last+1,path.length());	
 		}
 		return path;
 	}
@@ -707,12 +727,12 @@ public class FileHandler {
 			int last = path.lastIndexOf("]");
 			if (start >= 0) {
 				String selector = path.substring(start, last+1);
-				String header = strippedPath.substring(0, start);
+				String hdr = strippedPath.substring(0, start);
 				if (start+1 > strippedPath.length()) {
-					resumedPath = header+selector;
+					resumedPath = hdr + selector;
 				} else {
 					String trailer = strippedPath.substring(start+1, strippedPath.length());
-					resumedPath = header+selector+"/"+trailer;
+					resumedPath = hdr + selector + "/" + trailer;
 				}
 			}
 		}
@@ -824,7 +844,7 @@ public class FileHandler {
 			FileNotFoundException,
 			IOException 
 	{
-		System.out.println("- FileHandler.csvFileWrite "+filename+" "+charset);
+		if (TRACE) System.out.println(" (FileHandler) csvFileWrite " + filename + " " + charset);
 		FileOutputStream fileOutputStream = new FileOutputStream(filename);
 		ArrayList<ArrayList<String>> data = new ArrayList<>();	
 		// header
@@ -855,7 +875,7 @@ public class FileHandler {
 			FileNotFoundException,
 			IOException 
 	{
-		System.out.println("-- FileHandler.csvFileRead "+filename+" "+charset);
+		if (TRACE) System.out.println(" (FileHandler) csvFileRead " + filename + " " + charset);
 		FileInputStream fileInputStream = new FileInputStream(filename);
 		
 		ArrayList<ArrayList<String>> data = CSV.readFile(fileInputStream, charset);
@@ -863,6 +883,7 @@ public class FileHandler {
 		// header
 		header = new ArrayList<String>();
 		ArrayList<String> fields = data.get(0);
+		int headerCount = fields.size();
 		for (String field : fields) {
 			header.add(field);
 		}
@@ -870,431 +891,11 @@ public class FileHandler {
 		tidyData = new ArrayList<ArrayList<String>>();
 		for (int i = 1; i < data.size(); i++) {
 			fields = data.get(i);
+			while (fields.size() < headerCount)
+				fields.add(null);
 			tidyData.add(fields);
 		}
         fileInputStream.close();
 	}
 
-	
-	/**
-	 * スキーマファイル schema を読み込んで名前空間を定義する。
-	 * 
-	 * @param schema
-	 */
-	public static List<String> parseSchema(String schema, String rootType) 
-	{
-		int countNodes,
-			i,
-			j;
-		String 
-			attrName,
-			attrValue,
-			namespace,
-			schemaLocation,
-			name,
-			type,
-			ref,
-			unid,
-			complexType;
-		List<Node>
-			nodes,
-			elements;
-		Node
-			node,
-			attribute,
-			element;
-		Comment comment;
-		HashMap<String, String> namespaceMap = new HashMap<>();
-		HashMap<String, String> importMap = new HashMap<>();
-        NamedNodeMap attributes = null;
-		String rootXPath = "/xsd:schema/xsd:complexType[@name='"+rootType+"']/xsd:sequence/xsd:element";
- 	    try {
-		    //Build DOM
-		    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		    factory.setNamespaceAware(true); // never forget this!
-		    DocumentBuilder builder = factory.newDocumentBuilder();
-		    //Parse XML file
-		    File schemaFile = new File(schema);
-		    String dirPath = schemaFile.getParent();
-		    FileInputStream fis = new FileInputStream(schemaFile);
-		    doc = builder.parse(fis);
-		    //Create XPath
-		    XPathFactory xpathfactory = XPathFactory.newInstance();
-		    xpath = xpathfactory.newXPath();
-		    xpath.setNamespaceContext(new NamespaceResolver(doc));
-		    // parse schema
-        	nodes = getXPathNodes(doc,"/xsd:schema");
-	        node = nodes.get(0);
-		    attributes = node.getAttributes();
-        	namespaceMap = new HashMap<>();
-        	for (j = 0; j < attributes.getLength(); j++) {
-		 		attribute = attributes.item(j);
-	            attrName = attribute.getNodeName();
-	            attrValue = attribute.getNodeValue();
-	            namespaceMap.put(attrName, attrValue);
-	        }
-        	String schemaNamespace = "";
-        	if ("UBL"==PROCESSING) {
-        		schemaNamespace = namespaceMap.get("xmlns:cac");
-        	} else if ("CII"==PROCESSING) {
-        		schemaNamespace = namespaceMap.get("xmlns:ram");
-        	}
-        	nodes = getXPathNodes(doc,"/xsd:schema/xsd:import");
-	        countNodes = nodes.size();
-	        if (countNodes > 0) {
-	            for (i = 0; i < countNodes; i++) {
-	            	node = nodes.get(i);
-	            	namespace = "";
-	            	schemaLocation = "";
-	            	attributes = node.getAttributes();
-	            	for (j = 0; j < attributes.getLength(); j++) {
-	    		 		attribute = attributes.item(j);
-	    	            attrName = attribute.getNodeName();
-	    	            attrValue = attribute.getNodeValue();
-	    	            if ("namespace"==attrName)
-	    	            	namespace = attrValue;
-	    	            else if ("schemaLocation"==attrName)
-	    	            	schemaLocation = attrValue;
-	    	        }
-	            	importMap.put(namespace,schemaLocation);
-	            }
-	        }
-		    // Parse XML file
-	    	String agSchema = importMap.get(schemaNamespace);
-		    fis = new FileInputStream(new File(dirPath,agSchema));
-		    agDoc = builder.parse(fis);
-		    // Create XPath
-		    agXpath = xpathfactory.newXPath();
-		    agXpath.setNamespaceContext(new NamespaceResolver(agDoc));
-		    // get root XPath
-		    nodes = getXPathNodes(doc,rootXPath);
-	        countNodes = nodes.size();
-	        if (countNodes > 0) {
-	            for (i = 0; i < countNodes; i++) {
-	            	node = nodes.get(i);
-	            	attributes = node.getAttributes();
-	            	if ("CII"==PROCESSING) {
-		            	complexType = null;
-		            	comment = null;
-				        unid = null;
-		            	for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
-		            	    if (child.getNodeType() == Node.COMMENT_NODE) {
-		            	        comment = (Comment) child;
-		            	        unid = comment.getData();
-		            	    }
-		            	}
-		            	if (null==comment) {
-			        		List<Node> commentElements = getXPathNodes(node,"xsd:annotation/xsd:documentation/ccts:UniqueID");
-			        		if (commentElements.size()>0) {
-			        			Node commentNode = commentElements.get(0);
-			        			unid = commentNode.getTextContent();
-			        		}
-		            	}
-	            		name = attributes.getNamedItem("name").getNodeValue();
-	            		type = attributes.getNamedItem("type").getNodeValue();
-	            		if ("ram:".equals(type.substring(0,4))) {
-		            		complexType = type.substring(4);
-		            		type = null;
-		            	}
-		            	String _xPath = "rsm:"+name;
-		            	xPathCounter.add(unid+" "+_xPath);
-		            	System.out.println(xPathCounter.size()+" "+unid+" "+_xPath);
-		            	if (complexType!=null) {
-		            		checkComplexType(_xPath,complexType);
-		            	}
-	            	} else if ("UBL"==PROCESSING) {
-	            		ref = attributes.getNamedItem("ref").getNodeValue();
-	            		name = ref.substring(4);
-	            		if (jp_pint_XPath.contains(ref)) {
-		    		        xPathCounter.add(ref);
-		    		        if ("ext:".equals(ref.substring(0,4)) ||
-	    	            			"cbc:".equals(ref.substring(0,4))) {
-	    	            		System.out.println(xPathCounter.size()+" "+ref);
-	    	            	} else if ("cac:".equals(ref.substring(0,4))) {
-		            			String elementXPath = "/xsd:schema/xsd:element[@name='"+name +"']";
-		            			elements = getXPathNodes(agDoc,elementXPath);
-		            			int countElements = elements.size();
-		            		    if (countElements > 0) {
-		            		    	element = elements.get(0);
-		            		    	complexType = element.getAttributes().getNamedItem("type").getNodeValue();
-		    		            	System.out.println(xPathCounter.size()+" "+ref);
-		    		            	if (complexType!=null) {
-		    		            		checkComplexType(ref,complexType);
-		    		            	}
-		            		    }
-	    	            	}
-	            		}
-    	            }
-	            }
-	        }
-	        System.out.println("end");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	    return xPathCounter;
-	}
-
-	/**
-	 * @param xPath
-	 * @param parentType
-	 */
-	private static void checkComplexType(
-			String xPath,
-			String parentType) {
-		int countNodes;
-		int countElements,countChildElements;
-		int i;
-		String name = null;
-		String ref = null;
-		String type = null;
-		String complexType = null;
-		String unid = "";
-		List<Node> nodes;
-		List<Node> elements,childElements;
-		Node node;
-		Node element,childElement;
-		NamedNodeMap attributes;
-		String typeXPath = "/xsd:schema/xsd:complexType[@name='"+parentType +"']";
-		nodes = getXPathNodes(agDoc,typeXPath);
-	    countNodes = nodes.size();
-	    if (countNodes > 0) {
-        	node = nodes.get(0);
-            elements = getXPathNodes(node,"xsd:sequence/xsd:element");
-        	countElements = elements.size();
-        	for (i = 0; i < countElements; i++) {
-            	name = null;
-            	type = null;
-            	complexType = null;
-	            Comment comment = null;
-            	String _xPath = null;
-            	element = elements.get(i);
-            	attributes = element.getAttributes();
-	            if ("CII"==PROCESSING) {
-	            	for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-	            	    if (child.getNodeType() == Node.COMMENT_NODE) {
-	            	        comment = (Comment) child;
-	            	        unid = comment.getData();
-	            	    }
-	            	}
-	            	if (null==comment) {
-		        		List<Node> commentElements = getXPathNodes(element,"xsd:annotation/xsd:documentation/ccts:UniqueID");
-		        		if (commentElements.size()>0) {
-		        			Node commentNode = commentElements.get(0);
-		        			unid = commentNode.getTextContent();
-		        		}
-	            	}
-            		name = attributes.getNamedItem("name").getNodeValue();
-            		type = attributes.getNamedItem("type").getNodeValue();
-            		if ("ram:".equals(type.substring(0,4))) {
-	            		complexType = type.substring(4);
-	            		type = null;
-	            	}
-              		if (name.indexOf("ProcuringProject")>0) {
-		            	System.out.println("\tProcuringProject:"+unid+" "+"/ram:"+name+" in "+xPath);
-	            	} else if ((xPath+"/").indexOf("/ram:"+name+"/")>0) {
-		            	System.out.println("\trecursive "+unid+" "+"/ram:"+name+" in "+xPath);
-	            	} else {
-		            	_xPath = xPath+"/ram:"+name;
-		            	xPathCounter.add(unid+" "+_xPath);
-		            	System.out.println(xPathCounter.size()+" "+unid+" "+_xPath);
-		            	if (complexType!=null) {
-		            		checkComplexType(_xPath,complexType);
-		            	}
-	            	}
-            	} else if ("UBL"==PROCESSING) {
-            		ref = attributes.getNamedItem("ref").getNodeValue();
-            		if (null!=ref) {
-            			if ("cac:".equals(ref.substring(0,4)) && (xPath+"/").indexOf(ref+"/")>0) {
-    		            	System.out.println("\trecursive "+ref+" in "+xPath);
-    	            	} else {
-		            		name = ref.substring(4);
-		            		_xPath = xPath+"/"+ref;
-		            		if (jp_pint_XPath.contains(_xPath)) {
-			    		        xPathCounter.add(_xPath);
-			    		        System.out.println(xPathCounter.size()+" "+_xPath);
-			    		        if ("cac:".equals(ref.substring(0,4))) {
-			            			String elementXPath = "/xsd:schema/xsd:element[@name='"+name +"']";
-			            			childElements = getXPathNodes(agDoc,elementXPath);
-			            			countChildElements = childElements.size();
-			            		    if (countChildElements > 0) {
-			            		    	childElement = childElements.get(0);
-			            		    	complexType = childElement.getAttributes().getNamedItem("type").getNodeValue();
-			    		            	if (complexType!=null) {
-			    		            		if (jp_pint_XPath.contains(_xPath)) {
-				    		            		checkComplexType(_xPath,complexType);
-			    		            		}
-			    		            	}
-			            		    }
-				            	}
-		            		}
-    	            	}
-            		}
-            	}
-	        }
-	    }
-	}
-	
-    public static void fillXPath(String infile) {
-    	File file = new File(infile);
-    	try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-    		String xPath;
-    		while ((xPath = br.readLine()) != null) {
-    			jp_pint_XPath0.add(xPath);
-    			String path = xPath.replaceAll("\\[.+\\]","");
-    			path = path.replaceAll("/Invoice/", "");
-    			System.out.println(path);
-    			jp_pint_XPath.add(path);
-    		}
-    	} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-    }
-    
-    public static void updateXPath() {
-    	TreeMap<
-    			Integer/*sequence*/,
-    			String/*xpath*/>
-    		pathCounter = new TreeMap<>();
-    	TreeMap<
-    			String/*selector*/,
-    			TreeMap</*pathCounter*/
-    				Integer/*sequence*/,
-    				String/*xpath*/>>
-    		selectorXPathCounter = new TreeMap<>();
-    	TreeMap<
-    			Integer/*sequence of base*/, 
-    			TreeMap</*selectorXPathCounter*/
-    				String/*selector*/,
-    				TreeMap</*pathCounter*/
-    					Integer/*sequence*/,
-    					String/*xpath*/>>>
-    		baseXPathCounter = new TreeMap<>();
-    	int i;
-		int last = 0;
-    	Integer current=0;
-    	int size = jp_pint_XPath0.size();
-    	for (i = 0; i < size; i++) {
-    		String xpath = jp_pint_XPath0.get(i);
-    		if ("/Invoice".equals(xpath)) {
-    			continue;
-    		}
-    		xpath = xpath.replace("/Invoice/","");
-    		Integer index = 0;
-    		String sequence = null;
-    		String selector = null;
-    		String base = null;
-    		int start = xpath.indexOf("[");
-    		int end = 0;
-    		if (start > 0) {
-    			end = xpath.indexOf("]")+1;
-    		}
-    		if (end > 0) {
-    			base = xpath.substring(0,start);
-    			selector = xpath.substring(start,end);
-    			String _xpath = xpath.replaceAll("\\[.+\\]","");
-	    		index = xPathCounter.indexOf(_xpath);
-	    		if (-1==index) {
-	    			continue;
-	    		}
-	    		if (xpath.indexOf("ChargeIndicator")>0) {
-	    			System.out.println(index+" "+selector+" "+_xpath+"\n\t"+xpath);
-	    		}
-	    		current = index;
-    		} else {
-    			selector = "[]";
-    			index = xPathCounter.indexOf(xpath);
-				if ("cbc:".equals(xpath.substring(0,4))) {
-					base = "Invoice";			
-				} else if (xpath.length() >= 15 && "cac:InvoiceLine".equals(xpath.substring(0,15))) {
-					base = "cac:InvoiceLine";
-				} else if ("cac:".equals(xpath.substring(0,4))) {
-					int loc = xpath.indexOf("/");
-					if (loc > 0) {
-						base = xpath.substring(0,loc);
-					} else {
-						base = xpath;
-					}
-				}
-    		}
-    		int seqBase = 0;
-    		if (xPathCounter.contains(base)) {
-    			seqBase = xPathCounter.indexOf(base);
-    		} else {
-    			seqBase = -1;
-    		}    			
-			if (baseXPathCounter.containsKey(seqBase)) {
-				selectorXPathCounter = baseXPathCounter.get(seqBase);
-			} else {
-				selectorXPathCounter = new TreeMap<>();
-			}
-			if (selectorXPathCounter.containsKey(selector)) {
-				pathCounter = selectorXPathCounter.get(selector);
-			} else {
-				pathCounter = new TreeMap<>();
-			}
-			pathCounter.put(index, xpath);
-			System.out.println(pathCounter.toString());    					
-			selectorXPathCounter.put(selector, pathCounter);
-//			System.out.println(selectorXPathCounter.toString());    					
-			baseXPathCounter.put(seqBase, selectorXPathCounter);
-//			System.out.println(baseXPathCounter.toString());
-    	}
-    	
-    	TreeMap<String,TreeMap<Integer, String>> _selectorXPathCounter = null;
-    	TreeMap<Integer, String> _pathCounter = null;
-    	TreeMap<String,TreeMap<Integer, String>> selectorXPathCounter0 = baseXPathCounter.get(-1);
-    	TreeMap<Integer, String> pathCounter0 = selectorXPathCounter0.get("[]");
-    	TreeMap<String,TreeMap<Integer, String>> selectorXPathCounter1 = baseXPathCounter.get(208);
-    	TreeMap<Integer, String> pathCounter1 = selectorXPathCounter1.get("[]");
-   	
-    	List<String> _xPathCounter = new ArrayList<>();
-     	String selector, path="";
-    	for (Integer num = 0; num < xPathCounter.size(); num++) {
-   			if (baseXPathCounter.containsKey(num)) {
-    			_selectorXPathCounter = baseXPathCounter.get(num);
-    			Iterator<String> itSel = _selectorXPathCounter.keySet().iterator();
-            	while(itSel.hasNext()) {
-            		selector = itSel.next();
-    	        	_pathCounter = _selectorXPathCounter.get(selector);
-    	        	Iterator<Integer> itSeq = _pathCounter.keySet().iterator();
-    	        	while (itSeq.hasNext()) {
-    	        		Integer n = itSeq.next();
-    	        		if (-1==n) {
-    	        			continue;
-    	        		}
-    	        		path = _pathCounter.get(n);
-    	        		_xPathCounter.add(path);
-    	        		System.out.println(_xPathCounter.size()+" "+num +" "+n+" "+path);
-			    		int loc = jp_pint_XPath0.indexOf("/Invoice/"+path)+1;
-			    		String _path = jp_pint_XPath0.get(loc).replaceAll("/Invoice/","");
-			    		boolean isAttribute = _path.indexOf(path)==0 && "/@".equals("/"+_path.charAt(_path.lastIndexOf("/")+1));
-			    		while (isAttribute) {
-			    			_xPathCounter.add(_path);
-					    	System.out.println("\t"+_path);
-			    			if (loc>=jp_pint_XPath0.size()-1) {
-			    				isAttribute = false;
-			    			} else {
-				    			_path = jp_pint_XPath0.get(loc++);
-				    			isAttribute =  _path.indexOf(path)==0 && "/@".equals("/"+_path.charAt(_path.lastIndexOf("/")+1));
-			    			}
-			    		}
-    	        	}
-            	}
-    		} else {
-    			if (pathCounter0.containsKey(num)) { // Invoice
-	    			path = pathCounter0.get(num);
-	        		_xPathCounter.add(path);
-	        		System.out.println(num +" "+path);
-    			} else if (pathCounter1.containsKey(num)) { // InvoiceLine
-	    			path = pathCounter1.get(num);
-	        		_xPathCounter.add(path);
-	        		System.out.println(_xPathCounter.size()+" "+num +" "+path);
-    			}
-    		}
-    	}
-    	xPathCounter = _xPathCounter;
-//    	System.out.println(baseXPathCounter.toString());
-    }
 }
